@@ -1,6 +1,7 @@
 # ShopTogether - Implementation Roadmap
 
 ## Overview
+
 This document provides a detailed, step-by-step implementation plan for building the ShopTogether application.
 
 ---
@@ -8,20 +9,21 @@ This document provides a detailed, step-by-step implementation plan for building
 ## Phase 1: AWS Account Setup & Prerequisites (Week 1)
 
 ### Day 1-2: AWS Account Configuration
-- [ ] Create AWS account (if not exists)
-- [ ] Enable MFA on root account
+
 - [ ] Create IAM admin user
 - [ ] Configure AWS CLI locally
 - [ ] Set up billing alerts and budgets
 - [ ] Create development, staging, and production AWS accounts (optional, recommended for larger teams)
 
 ### Day 3: Domain & SSL Setup
+
 - [ ] Register domain name (Route53 or external)
 - [ ] Request SSL certificate via AWS Certificate Manager
 - [ ] Validate certificate ownership
 - [ ] Note: Certificate must be in us-east-1 for CloudFront
 
 ### Day 4-5: SES Email Configuration
+
 - [ ] Verify sender email address or domain
 - [ ] Request production access (move out of sandbox)
 - [ ] Create email templates
@@ -29,6 +31,7 @@ This document provides a detailed, step-by-step implementation plan for building
 - [ ] Test email sending
 
 ### Day 6-7: Development Environment
+
 - [ ] Install Node.js (18+) and npm/yarn
 - [ ] Install AWS CDK: `npm install -g aws-cdk`
 - [ ] Install AWS SAM CLI (alternative)
@@ -41,6 +44,7 @@ This document provides a detailed, step-by-step implementation plan for building
 ## Phase 2: Infrastructure as Code Setup (Week 2)
 
 ### Day 1-2: CDK Project Initialization
+
 ```bash
 # Initialize CDK project
 mkdir shoptogether-infrastructure
@@ -58,6 +62,7 @@ npm install @aws-cdk/aws-ses
 ```
 
 ### Project Structure
+
 ```
 shoptogether/
 ├── infrastructure/               # CDK code
@@ -95,6 +100,7 @@ shoptogether/
 ```
 
 ### Day 3-4: DynamoDB Stack
+
 - [ ] Create DynamoDB table with single-table design
 - [ ] Define PK/SK structure
 - [ ] Create GSIs (UserListsIndex, TokenIndex)
@@ -104,6 +110,7 @@ shoptogether/
 - [ ] Add billing mode (on-demand recommended)
 
 ### Day 5: Cognito Stack
+
 - [ ] Create User Pool
 - [ ] Configure sign-up attributes (email, name)
 - [ ] Set password policies
@@ -113,6 +120,7 @@ shoptogether/
 - [ ] Set up user pool domain
 
 ### Day 6-7: Deploy Initial Infrastructure
+
 ```bash
 # Bootstrap CDK (first time only)
 cdk bootstrap aws://ACCOUNT-ID/REGION
@@ -129,6 +137,7 @@ cdk deploy DatabaseStack
 ### Week 3: REST API Endpoints
 
 #### Day 1-2: Lists API
+
 - [ ] `POST /lists` - Create list
   - Validate input (title, type)
   - Generate unique listId
@@ -152,6 +161,7 @@ cdk deploy DatabaseStack
   - Return success
 
 #### Day 3-4: Items API
+
 - [ ] `POST /lists/{listId}/items` - Add item
   - Verify write access
   - Generate unique itemId
@@ -170,6 +180,7 @@ cdk deploy DatabaseStack
   - Trigger real-time update
 
 #### Day 5-6: Sharing API
+
 - [ ] `POST /lists/{listId}/share` - Generate share invitation
   - Verify ownership
   - Generate unique token
@@ -191,6 +202,7 @@ cdk deploy DatabaseStack
   - Notify via email (optional)
 
 #### Day 7: Testing & Deployment
+
 - [ ] Write unit tests for each endpoint
 - [ ] Integration tests with DynamoDB Local
 - [ ] Deploy Lambda functions
@@ -200,6 +212,7 @@ cdk deploy DatabaseStack
 ### Week 4: WebSocket API
 
 #### Day 1-2: Connection Management
+
 - [ ] **Connect Handler** (`$connect`)
   - Extract JWT from query string
   - Validate token with Cognito
@@ -211,35 +224,40 @@ cdk deploy DatabaseStack
   - Clean up all subscription records
 
 #### Day 3-4: Message Handling
+
 - [ ] **Subscribe to List**
+
   ```json
   {
     "action": "subscribe",
     "listId": "abc123"
   }
   ```
+
   - Verify user has access to list
   - Store subscription: `CONN#<connectionId>` + `SUB#<listId>`
   - Send confirmation message
-  
+
 - [ ] **Unsubscribe from List**
+
   ```json
   {
     "action": "unsubscribe",
     "listId": "abc123"
   }
   ```
+
   - Remove subscription record
   - Send confirmation
 
 #### Day 5-6: Broadcast Mechanism
+
 - [ ] Create DynamoDB Stream handler
   - Trigger on INSERT, MODIFY, DELETE
   - Extract listId from changed record
   - Query all connections subscribed to listId
   - Build update message
   - Send to all subscribers via API Gateway Management API
-  
 - [ ] Implement broadcast patterns:
   - `item.added` - New item added
   - `item.updated` - Item changed
@@ -249,6 +267,7 @@ cdk deploy DatabaseStack
   - `list.updated` - List metadata changed
 
 #### Day 7: Testing
+
 - [ ] Test WebSocket connections locally
 - [ ] Test subscribe/unsubscribe
 - [ ] Test real-time broadcasts with multiple clients
@@ -262,6 +281,7 @@ cdk deploy DatabaseStack
 ### Week 5: Core UI & Authentication
 
 #### Day 1-2: Project Setup
+
 ```bash
 # Create React app
 npx create-next-app@latest frontend
@@ -278,6 +298,7 @@ npm install react-hook-form
 ```
 
 #### Day 3-4: Authentication UI
+
 - [ ] Sign Up page
   - Form with email, password, name
   - Email verification flow
@@ -296,6 +317,7 @@ npm install react-hook-form
   - Auto-refresh tokens
 
 #### Day 5-6: Layout & Navigation
+
 - [ ] App shell with navigation bar
 - [ ] Sidebar for list navigation
 - [ ] User menu (profile, settings, logout)
@@ -303,6 +325,7 @@ npm install react-hook-form
 - [ ] Dark mode support (optional)
 
 #### Day 7: State Management
+
 - [ ] Set up Zustand store
   - Auth state
   - Lists state
@@ -316,6 +339,7 @@ npm install react-hook-form
 ### Week 6: Lists & Real-time Features
 
 #### Day 1-2: Lists Management
+
 - [ ] Lists dashboard
   - Display all user's lists
   - Grid/list view toggle
@@ -331,6 +355,7 @@ npm install react-hook-form
   - Update UI optimistically
 
 #### Day 3-4: List Items View
+
 - [ ] List detail page
   - Display all items
   - Add item input at top
@@ -350,6 +375,7 @@ npm install react-hook-form
   - Optimistic removal
 
 #### Day 5-6: WebSocket Integration
+
 - [ ] WebSocket client connection
   - Connect on app load
   - Pass JWT in connection
@@ -365,6 +391,7 @@ npm install react-hook-form
   - Conflict resolution for simultaneous edits
 
 #### Day 7: Sharing Features
+
 - [ ] Share list button
   - Modal with email input
   - Send invitation
@@ -385,6 +412,7 @@ npm install react-hook-form
 ## Phase 5: Email & Notifications (Week 7)
 
 ### Day 1-2: Email Templates
+
 - [ ] Create HTML email templates
   - Welcome email
   - List invitation
@@ -395,6 +423,7 @@ npm install react-hook-form
 - [ ] Test rendering in multiple email clients
 
 ### Day 3-4: Email Sending Logic
+
 - [ ] Lambda function for sending emails
   - Template rendering
   - SES API calls
@@ -410,6 +439,7 @@ npm install react-hook-form
   - Test on multiple providers (Gmail, Outlook, etc.)
 
 ### Day 5-7: In-app Notifications
+
 - [ ] Notification component
   - Toast/snackbar UI
   - Position (top-right recommended)
@@ -429,6 +459,7 @@ npm install react-hook-form
 ## Phase 6: Testing & Quality Assurance (Week 8)
 
 ### Day 1-2: Unit Testing
+
 - [ ] Backend Lambda tests
   - Mock DynamoDB calls
   - Test business logic
@@ -441,6 +472,7 @@ npm install react-hook-form
   - Coverage: >70%
 
 ### Day 3-4: Integration Testing
+
 - [ ] API integration tests
   - Test full request/response cycles
   - Test with real DynamoDB (local)
@@ -451,6 +483,7 @@ npm install react-hook-form
   - Test multiple simultaneous connections
 
 ### Day 5: End-to-End Testing
+
 - [ ] E2E test scenarios
   - User sign up and login
   - Create and share list
@@ -460,6 +493,7 @@ npm install react-hook-form
 - [ ] Run in CI/CD pipeline
 
 ### Day 6-7: Performance & Load Testing
+
 - [ ] Frontend performance
   - Lighthouse audit (target: >90)
   - Optimize bundle size
@@ -476,6 +510,7 @@ npm install react-hook-form
 ## Phase 7: Deployment & DevOps (Week 9)
 
 ### Day 1-2: CI/CD Pipeline
+
 - [ ] Set up GitHub Actions (or CodePipeline)
   - Trigger on push to main
   - Run tests
@@ -485,6 +520,7 @@ npm install react-hook-form
   - Invalidate CloudFront cache
 
 Example GitHub Actions workflow:
+
 ```yaml
 name: Deploy
 on:
@@ -505,6 +541,7 @@ jobs:
 ```
 
 ### Day 3-4: Environment Configuration
+
 - [ ] Separate environments (dev, staging, prod)
 - [ ] Environment-specific configs
   - API endpoints
@@ -515,6 +552,7 @@ jobs:
   - Environment variables in Lambda
 
 ### Day 5-6: Monitoring & Alerting
+
 - [ ] CloudWatch Dashboards
   - Lambda invocations, errors, duration
   - API Gateway requests, latency, 4xx/5xx
@@ -530,6 +568,7 @@ jobs:
   - Slack integration (optional)
 
 ### Day 7: Production Deployment
+
 - [ ] Final smoke tests in staging
 - [ ] Deploy to production
 - [ ] Monitor initial traffic
@@ -541,12 +580,14 @@ jobs:
 ## Phase 8: Post-Launch (Ongoing)
 
 ### Week 10+: Enhancements & Iteration
+
 - [ ] Collect user feedback
 - [ ] Monitor error logs and fix bugs
 - [ ] Optimize performance based on metrics
 - [ ] Add new features based on roadmap
 
 ### Future Feature Ideas
+
 1. **Mobile Apps**: Native iOS/Android apps
 2. **Offline Support**: PWA with service workers
 3. **Voice Input**: Add items via voice
@@ -559,6 +600,7 @@ jobs:
 10. **Social Features**: Follow friends, public lists
 
 ### Maintenance Tasks
+
 - [ ] Regular dependency updates
 - [ ] Security patches
 - [ ] Database backups verification
@@ -572,21 +614,22 @@ jobs:
 
 ### Potential Risks & Mitigations
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| Cold start latency | High | Medium | Provisioned concurrency for critical functions |
-| WebSocket disconnections | Medium | High | Auto-reconnect with exponential backoff |
-| DynamoDB throttling | High | Low | On-demand billing, burst capacity, monitoring |
-| Email deliverability | Medium | Medium | Verify domain, DKIM/SPF records, monitor bounces |
-| Concurrent edit conflicts | Medium | Medium | Last-write-wins + conflict indicators in UI |
-| Security vulnerabilities | High | Low | Regular security audits, dependency scanning |
-| Cost overruns | Medium | Low | Billing alerts, budget limits, usage monitoring |
+| Risk                      | Impact | Probability | Mitigation                                       |
+| ------------------------- | ------ | ----------- | ------------------------------------------------ |
+| Cold start latency        | High   | Medium      | Provisioned concurrency for critical functions   |
+| WebSocket disconnections  | Medium | High        | Auto-reconnect with exponential backoff          |
+| DynamoDB throttling       | High   | Low         | On-demand billing, burst capacity, monitoring    |
+| Email deliverability      | Medium | Medium      | Verify domain, DKIM/SPF records, monitor bounces |
+| Concurrent edit conflicts | Medium | Medium      | Last-write-wins + conflict indicators in UI      |
+| Security vulnerabilities  | High   | Low         | Regular security audits, dependency scanning     |
+| Cost overruns             | Medium | Low         | Billing alerts, budget limits, usage monitoring  |
 
 ---
 
 ## Success Metrics
 
 ### Technical Metrics
+
 - **Uptime**: >99.9%
 - **API Latency**: p99 < 500ms
 - **WebSocket Latency**: < 100ms
@@ -594,6 +637,7 @@ jobs:
 - **Test Coverage**: >80%
 
 ### Business Metrics
+
 - **Active Users**: Track daily/monthly active users
 - **Lists Created**: Total and per user
 - **Collaboration Rate**: % of lists shared
