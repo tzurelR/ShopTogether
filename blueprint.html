@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ShopTogether Blueprint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~960px) with full-width bands for screens and diagrams; phone mockups wrap in a grid. */
+:root {
+  --bg: #f5f7f4;
+  --surface: #ffffff;
+  --sunk: #e9eee8;
+  --fg: #18211b;
+  --muted: #5b6a60;
+  --line: #d3dcd4;
+  --accent: #1f7a4d;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcefe3;
+  --live: #d4462f;
+  --live-soft: #fbe3de;
+  --amber: #9a6a00;
+  --amber-soft: #fbefd2;
+  --e-cdk: #2f5fb3;
+  --e-cdk-soft: #dfe8f8;
+  --e-be: #6b47b8;
+  --e-be-soft: #ebe3f8;
+  --e-fe: #0f7c86;
+  --e-fe-soft: #d8f0f1;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613; --surface: #19201b; --sunk: #0c100d; --fg: #e4ebe5; --muted: #98a89d;
+    --line: #2c3730; --accent: #4cc285; --accent-ink: #08130c; --accent-soft: #173525;
+    --live: #ff7a62; --live-soft: #3a1c16; --amber: #e8b54a; --amber-soft: #352a10;
+    --e-cdk: #8fb2f0; --e-cdk-soft: #1b2840; --e-be: #bea4f2; --e-be-soft: #2a2140; --e-fe: #6fd0d8; --e-fe-soft: #12302f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613; --surface: #19201b; --sunk: #0c100d; --fg: #e4ebe5; --muted: #98a89d;
+  --line: #2c3730; --accent: #4cc285; --accent-ink: #08130c; --accent-soft: #173525;
+  --live: #ff7a62; --live-soft: #3a1c16; --amber: #e8b54a; --amber-soft: #352a10;
+  --e-cdk: #8fb2f0; --e-cdk-soft: #1b2840; --e-be: #bea4f2; --e-be-soft: #2a2140; --e-fe: #6fd0d8; --e-fe-soft: #12302f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font: 400 16px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1.1rem; font-weight: 700; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+code { background: var(--sunk); padding: 0.1em 0.35em; border-radius: 4px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header.top { padding-block: 48px 32px; display: grid; gap: 16px; border-bottom: 1px solid var(--line); }
+.eyebrow { font: 600 0.75rem/1 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.15rem; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 500 0.8rem/1 var(--mono); padding: 6px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; padding-block: 16px; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
+nav.toc a { text-decoration: none; color: var(--fg); }
+nav.toc a:hover { color: var(--accent); }
+
+section { padding-block: 48px 8px; display: grid; gap: 20px; }
+.sec-head { display: grid; gap: 8px; }
+
+/* ---------- phone mockups ---------- */
+.phones { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 24px; }
+.phone-cap { display: grid; gap: 4px; margin-top: 10px; }
+.phone-cap b { font-family: var(--display); font-size: 1rem; }
+.phone-cap span { color: var(--muted); font-size: 0.88rem; line-height: 1.45; }
+.phone {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 28px;
+  padding: 14px 14px 18px; min-height: 440px; display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 1px 0 var(--line), 0 18px 40px -28px rgba(0,0,0,.35);
+  font-size: 0.85rem; position: relative; overflow: hidden;
+}
+.notch { width: 70px; height: 6px; border-radius: 6px; background: var(--line); margin: 0 auto 4px; }
+.app-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.brand { font: 700 1rem/1 var(--display); color: var(--accent); }
+.avatar { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 0.7rem/1 var(--body); background: var(--accent-soft); color: var(--accent); }
+.avatars { display: flex; }
+.avatars .avatar { border: 2px solid var(--surface); margin-left: -8px; }
+.avatars .avatar:first-child { margin-left: 0; }
+.avatar.b { background: var(--amber-soft); color: var(--amber); }
+.field { display: grid; gap: 4px; }
+.field label { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+.input { border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; background: var(--bg); color: var(--fg); }
+.input.ph { color: var(--muted); }
+.btn { border-radius: 10px; padding: 10px; text-align: center; font-weight: 600; background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+.small { font-size: 0.75rem; color: var(--muted); text-align: center; }
+.screen-title { font: 700 1.25rem/1.2 var(--display); }
+.code-boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.code-boxes div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 0; text-align: center; font: 600 1rem/1 var(--mono); background: var(--bg); }
+.code-boxes div.on { border-color: var(--accent); }
+.list-card { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; }
+.list-card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.list-card b { font-size: 0.92rem; }
+.meta { color: var(--muted); font-size: 0.74rem; }
+.bar { height: 4px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.fab { position: absolute; right: 16px; bottom: 18px; width: 44px; height: 44px; border-radius: 14px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 500 1.5rem/1 var(--body); }
+.live-pill { display: inline-flex; align-items: center; gap: 6px; font: 600 0.7rem/1 var(--body); color: var(--live); background: var(--live-soft); padding: 5px 8px; border-radius: 999px; }
+.live-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .live-pill::before { animation: none; } }
+.item { display: grid; grid-template-columns: 18px 1fr auto; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.box { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--line); }
+.item.done .box { background: var(--accent); border-color: var(--accent); }
+.item.done .txt { text-decoration: line-through; color: var(--muted); }
+.item.flash { background: var(--accent-soft); margin-inline: -8px; padding-inline: 8px; border-radius: 8px; }
+.qty { font: 500 0.75rem/1 var(--mono); color: var(--muted); }
+.who { font-size: 0.68rem; color: var(--muted); display: block; }
+.add-row { display: flex; gap: 6px; margin-top: auto; }
+.add-row .input { flex: 1; }
+.add-row .btn { padding: 9px 14px; }
+.toast { position: absolute; left: 14px; right: 14px; bottom: 64px; background: var(--fg); color: var(--bg); border-radius: 10px; padding: 9px 12px; font-size: 0.76rem; }
+.sheet { margin-top: auto; border: 1px solid var(--line); border-radius: 18px 18px 12px 12px; padding: 14px; display: grid; gap: 10px; background: var(--bg); }
+.dim { opacity: .35; display: grid; gap: 6px; }
+.person { display: flex; align-items: center; gap: 8px; }
+.person .grow { flex: 1; min-width: 0; }
+.tag { font: 600 0.65rem/1 var(--body); padding: 4px 6px; border-radius: 6px; background: var(--sunk); color: var(--muted); }
+.tag.wait { background: var(--amber-soft); color: var(--amber); }
+.mail { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.mail .head { background: var(--sunk); padding: 8px 10px; font-size: 0.72rem; color: var(--muted); display: grid; gap: 2px; }
+.mail .body { padding: 12px 10px; display: grid; gap: 10px; }
+
+/* ---------- architecture / panels ---------- */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; overflow-x: auto; }
+pre.mermaid { margin: 0; background: transparent; min-width: 560px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.svc { display: grid; gap: 6px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.svc .k { font: 600 0.72rem/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.svc p { font-size: 0.93rem; }
+.why { font-size: 0.85rem; color: var(--muted); }
+
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 0.72rem/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--sunk); }
+tr:last-child td { border-bottom: 0; }
+td.mono, td code { white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.method { font: 600 0.72rem/1 var(--mono); padding: 3px 6px; border-radius: 5px; background: var(--accent-soft); color: var(--accent); }
+.method.del { background: var(--live-soft); color: var(--live); }
+.method.patch { background: var(--amber-soft); color: var(--amber); }
+
+.flow-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.flow-tabs button {
+  font: 600 0.88rem/1 var(--body); padding: 10px 14px; border-radius: 999px; cursor: pointer;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line);
+}
+.flow-tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.flow-note { font-size: 0.92rem; color: var(--muted); }
+
+.decision { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.opt { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--surface); display: grid; gap: 8px; align-content: start; }
+.opt.pick { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.opt ul { margin: 0; padding-left: 18px; font-size: 0.9rem; display: grid; gap: 4px; }
+.badge { justify-self: start; font: 600 0.7rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent); color: var(--accent-ink); }
+.badge.alt { background: var(--sunk); color: var(--muted); }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: s; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 52px 1fr; gap: 16px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+ol.steps li::before { content: counter(s); font: 700 1.6rem/1 var(--display); color: var(--accent); width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: var(--accent-soft); }
+ol.steps li.later::before { color: var(--muted); background: var(--sunk); }
+.step-body { display: grid; gap: 8px; min-width: 0; }
+.step-body ul { margin: 0; padding-left: 18px; font-size: 0.92rem; display: grid; gap: 3px; }
+.done { font-size: 0.88rem; padding: 8px 12px; border-radius: 8px; background: var(--accent-soft); }
+.done b { color: var(--accent); }
+.footnote { font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 520px) {
+  ol.steps li { grid-template-columns: 1fr; }
+}
+
+/* ---------- tickets (Jira-style backlog) ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.filters button {
+  font: 600 0.82rem/1 var(--body); padding: 8px 12px; border-radius: 6px; cursor: pointer;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line);
+}
+.filters button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.filters .count { margin-left: auto; font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.epic-group { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.epic-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; background: var(--sunk); border-bottom: 1px solid var(--line); }
+.epic-head h3 { font-size: 1rem; }
+.epic-head .meta { margin-left: auto; font-variant-numeric: tabular-nums; }
+.lozenge { font: 700 0.68rem/1 var(--body); letter-spacing: .06em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; white-space: nowrap; }
+.lozenge.cdk { background: var(--e-cdk-soft); color: var(--e-cdk); }
+.lozenge.be { background: var(--e-be-soft); color: var(--e-be); }
+.lozenge.fe { background: var(--e-fe-soft); color: var(--e-fe); }
+.lozenge.todo { background: var(--sunk); color: var(--muted); border: 1px solid var(--line); }
+details.tk { border-bottom: 1px solid var(--line); }
+details.tk:last-child { border-bottom: 0; }
+details.tk summary {
+  list-style: none; cursor: pointer; display: grid; align-items: center; gap: 10px;
+  grid-template-columns: 16px 58px minmax(0, 1fr) auto; padding: 10px 14px;
+}
+details.tk summary::-webkit-details-marker { display: none; }
+details.tk summary:hover { background: var(--bg); }
+details.tk[open] summary { background: var(--bg); }
+.tk-type { width: 16px; height: 16px; border-radius: 3px; display: grid; place-items: center; }
+.tk-type.story { background: #36a85a; }
+.tk-type.task { background: #3b82e0; }
+.tk-type svg { width: 10px; height: 10px; }
+.tk-key { font: 500 0.8rem/1 var(--mono); color: var(--muted); }
+.tk-title { font-size: 0.93rem; min-width: 0; }
+.tk-right { display: flex; align-items: center; gap: 8px; }
+.prio { font: 700 0.8rem/1 var(--body); width: 16px; text-align: center; }
+.prio.high { color: var(--live); }
+.prio.med { color: var(--amber); }
+.prio.low { color: var(--e-cdk); }
+.pts { min-width: 24px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--sunk); font: 600 0.75rem/20px var(--body); text-align: center; font-variant-numeric: tabular-nums; }
+.tk-body { padding: 4px 14px 18px 98px; display: grid; gap: 12px; font-size: 0.92rem; }
+.tk-body h4 { margin: 0; font: 600 0.72rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tk-body ul { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 5px; }
+.tk-body ul li { display: grid; grid-template-columns: 16px 1fr; gap: 8px; }
+.tk-body ul li::before { content: ""; width: 12px; height: 12px; margin-top: 5px; border: 1.5px solid var(--muted); border-radius: 3px; }
+.tk-fields { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.84rem; color: var(--muted); }
+.tk-fields b { color: var(--fg); font-weight: 600; }
+@media (max-width: 640px) {
+  details.tk summary { grid-template-columns: 16px minmax(0, 1fr); }
+  .tk-key { grid-column: 2; }
+  .tk-title { grid-column: 1 / -1; }
+  .tk-right { grid-column: 1 / -1; }
+  .tk-body { padding-left: 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">ShopTogether · design, architecture &amp; build plan</span>
+    <h1>Shared lists that update live, on AWS for about $0 a month</h1>
+    <p class="lede">You sign up with email and password, then create lists and items. You share a list by email, and everyone who has it open sees each change within a second. The backend is serverless and pay-per-use. We build it in five steps, and every step ends with something you can test on AWS.</p>
+    <div class="chips">
+      <span class="chip">eu-central-1</span>
+      <span class="chip">Python 3.12 · arm64 Lambda</span>
+      <span class="chip">CDK (Python)</span>
+      <span class="chip">Cognito</span>
+      <span class="chip">DynamoDB on-demand</span>
+      <span class="chip">HTTP API + WebSocket API</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Sections">
+    <a href="#screens">Screens</a><a href="#architecture">Architecture</a><a href="#flows">Flows</a>
+    <a href="#data">Data model</a><a href="#api">API</a><a href="#gateway">API Gateway</a><a href="#realtime">Live updates</a>
+    <a href="#cost">Cost</a><a href="#steps">Build steps</a><a href="#tickets">Tickets</a>
+  </nav>
+
+  <!-- ================= SCREENS ================= -->
+  <section id="screens">
+    <div class="sec-head">
+      <span class="eyebrow">Design</span>
+      <h2>Screens</h2>
+      <p>Six screens cover the whole product. They are mobile-first, because people usually check off items with a phone in the store. The same layout widens to a centered column on desktop.</p>
+    </div>
+    <div class="phones">
+      <div>
+        <div class="phone" aria-label="Log in screen mockup">
+          <div class="notch"></div>
+          <div class="brand">ShopTogether</div>
+          <div class="screen-title" style="margin-top:28px">Welcome back</div>
+          <div class="field"><label>Email</label><div class="input">noa@example.com</div></div>
+          <div class="field"><label>Password</label><div class="input">••••••••••</div></div>
+          <div class="btn">Log in</div>
+          <div class="small">Forgot password?</div>
+          <div class="small" style="margin-top:auto">New here? <b style="color:var(--accent)">Create an account</b></div>
+        </div>
+        <div class="phone-cap"><b>1 · Log in</b><span>Cognito email and password. The tokens stay in memory, and only the refresh token goes to localStorage.</span></div>
+      </div>
+
+      <div>
+        <div class="phone" aria-label="Confirm email screen mockup">
+          <div class="notch"></div>
+          <div class="brand">ShopTogether</div>
+          <div class="screen-title" style="margin-top:28px">Check your email</div>
+          <p class="meta" style="font-size:.8rem">We sent a 6-digit code to <b>dana@example.com</b>.</p>
+          <div class="code-boxes"><div>4</div><div>8</div><div>1</div><div class="on">0</div><div></div><div></div></div>
+          <div class="btn">Confirm and continue</div>
+          <div class="small">Resend code</div>
+          <div class="small" style="margin-top:auto">Step 2 of 2 · sign up</div>
+        </div>
+        <div class="phone-cap"><b>2 · Sign up + confirm</b><span>Sign up with email and password, then confirm with the code that Cognito emails. If the person came from an invite link, the app opens that list next.</span></div>
+      </div>
+
+      <div>
+        <div class="phone" aria-label="My lists screen mockup">
+          <div class="notch"></div>
+          <div class="app-bar"><div class="brand">My lists</div><div class="avatar">N</div></div>
+          <div class="list-card">
+            <div class="row"><b>Weekly groceries</b><div class="avatars"><div class="avatar">N</div><div class="avatar b">D</div></div></div>
+            <span class="meta">9 of 14 done · shared with Dana</span>
+            <div class="bar"><i style="width:64%"></i></div>
+          </div>
+          <div class="list-card">
+            <div class="row"><b>Maya's birthday</b><div class="avatars"><div class="avatar">N</div><div class="avatar b">A</div><div class="avatar">R</div></div></div>
+            <span class="meta">2 of 11 done · 3 people</span>
+            <div class="bar"><i style="width:18%"></i></div>
+          </div>
+          <div class="list-card">
+            <div class="row"><b>Hardware store</b><span class="tag">Only you</span></div>
+            <span class="meta">0 of 4 done</span>
+            <div class="bar"><i style="width:0%"></i></div>
+          </div>
+          <div class="fab" aria-hidden="true">+</div>
+        </div>
+        <div class="phone-cap"><b>3 · My lists</b><span>Your own lists and lists shared with you appear together. Press + to create a list. Swipe or long-press a list to rename or delete it.</span></div>
+      </div>
+
+      <div>
+        <div class="phone" aria-label="List detail with live updates mockup">
+          <div class="notch"></div>
+          <div class="app-bar"><b style="font-family:var(--display);font-size:1rem">‹ Weekly groceries</b><span class="live-pill">Dana here</span></div>
+          <div>
+            <div class="item"><div class="box"></div><div class="txt">Oat milk<span class="who">added by Dana</span></div><span class="qty">×2</span></div>
+            <div class="item flash done"><div class="box"></div><div class="txt">Eggs<span class="who">checked by Dana · now</span></div><span class="qty">×12</span></div>
+            <div class="item"><div class="box"></div><div class="txt">Tomatoes</div><span class="qty">1 kg</span></div>
+            <div class="item"><div class="box"></div><div class="txt">Pita</div><span class="qty">×6</span></div>
+            <div class="item done"><div class="box"></div><div class="txt">Hummus</div><span class="qty">×1</span></div>
+          </div>
+          <div class="toast">Dana checked off Eggs</div>
+          <div class="add-row"><div class="input ph">Add item…</div><div class="btn">Add</div></div>
+        </div>
+        <div class="phone-cap"><b>4 · List (live)</b><span>Check, edit, reorder and delete items. Changes from other people arrive over the WebSocket, and the changed row highlights briefly.</span></div>
+      </div>
+
+      <div>
+        <div class="phone" aria-label="Share sheet mockup">
+          <div class="notch"></div>
+          <div class="dim">
+            <b style="font-family:var(--display)">‹ Weekly groceries</b>
+            <div class="item"><div class="box"></div><div class="txt">Oat milk</div><span class="qty">×2</span></div>
+            <div class="item"><div class="box"></div><div class="txt">Tomatoes</div><span class="qty">1 kg</span></div>
+          </div>
+          <div class="sheet">
+            <b style="font-family:var(--display);font-size:1rem">Share list</b>
+            <div class="add-row"><div class="input">avi@example.com</div><div class="btn">Invite</div></div>
+            <div class="person"><div class="avatar">N</div><div class="grow">Noa<span class="who">noa@example.com</span></div><span class="tag">Owner</span></div>
+            <div class="person"><div class="avatar b">D</div><div class="grow">Dana<span class="who">dana@example.com</span></div><span class="tag">Editor</span></div>
+            <div class="person"><div class="avatar">A</div><div class="grow">avi@example.com<span class="who">invited · expires in 7 days</span></div><span class="tag wait">Pending</span></div>
+          </div>
+        </div>
+        <div class="phone-cap"><b>5 · Share</b><span>The owner invites people by email and can remove members or cancel invites. Every member can edit items.</span></div>
+      </div>
+
+      <div>
+        <div class="phone" aria-label="Invite email and accept mockup">
+          <div class="notch"></div>
+          <div class="mail">
+            <div class="head"><span>From: ShopTogether &lt;invites@…&gt;</span><span>To: avi@example.com</span></div>
+            <div class="body">
+              <b style="font-family:var(--display);font-size:1rem">Noa shared "Weekly groceries" with you</b>
+              <span class="meta">Open the list to see it and edit it together. The link expires in 7 days.</span>
+              <div class="btn">Open the list</div>
+            </div>
+          </div>
+          <div class="screen-title" style="font-size:1rem;margin-top:6px">After the click</div>
+          <div class="list-card"><b>Join "Weekly groceries"?</b><span class="meta">Log in or sign up as avi@example.com to accept.</span></div>
+          <div class="btn">Sign up</div>
+          <div class="btn ghost">I have an account</div>
+        </div>
+        <div class="phone-cap"><b>6 · Invite email → accept</b><span>The link carries a one-time token. After login, the app accepts the invite only if the logged-in email matches the invited email.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ARCHITECTURE ================= -->
+  <section id="architecture">
+    <div class="sec-head">
+      <span class="eyebrow">Architecture</span>
+      <h2>Two Lambdas, one table, no servers left running</h2>
+      <p>The design keeps the number of parts small. That means less to deploy and less to debug, and nothing costs money while nobody uses the app.</p>
+    </div>
+    <div class="panel">
+<pre class="mermaid">
+flowchart LR
+  U["Browser app (static SPA)"]
+  C["Cognito user pool"]
+  H["HTTP API (JWT authorizer)"]
+  W["WebSocket API"]
+  LA["api Lambda (all REST routes)"]
+  LW["ws Lambda (connect, disconnect, subscribe)"]
+  D[("DynamoDB: one table")]
+  S["SES (invite email, step 5)"]
+  F["S3 + CloudFront (hosting, step 5)"]
+  U -- "sign up / log in" --> C
+  U -- "HTTPS + access token" --> H
+  H -. "verifies JWT" .-> C
+  H --> LA
+  U &lt;-- "wss://" --> W
+  W --> LW
+  LA --> D
+  LW --> D
+  LA -- "push change to subscribers" --> W
+  LA -- "invite email" --> S
+  F -. "serves" .-> U
+</pre>
+    </div>
+    <div class="grid2">
+      <div class="svc"><span class="k">Auth</span><h3>Cognito user pool (Lite)</h3><p>Email and password with email verification. The app client has no secret, so the browser calls Cognito directly with <code>fetch</code>. No Amplify.</p><span class="why">First 10,000 monthly active users are free.</span></div>
+      <div class="svc"><span class="k">REST</span><h3>API Gateway HTTP API</h3><p>Its built-in JWT authorizer checks Cognito tokens, so we don't write or pay for an authorizer Lambda.</p><span class="why">About a third of the price of a REST API.</span></div>
+      <div class="svc"><span class="k">Compute</span><h3>2 Lambda functions</h3><p><code>api</code> handles every REST route with a small router. <code>ws</code> handles the socket events. Both use only boto3, so there is nothing to package.</p><span class="why">arm64 and 256 MB. Fewer functions also means fewer cold starts.</span></div>
+      <div class="svc"><span class="k">Data</span><h3>DynamoDB, single table</h3><p>Lists, items, members, invites and socket connections share one table. Expired invites and connections are deleted for free by the table's TTL.</p><span class="why">On-demand billing. 25 GB of storage is always free.</span></div>
+      <div class="svc"><span class="k">Live</span><h3>API Gateway WebSocket</h3><p>After each write, the <code>api</code> Lambda pushes the change straight to the people who have that list open. No streams and no extra Lambda.</p><span class="why">Costs cents at hobby scale. Compared with Pusher <a href="#realtime">below</a>.</span></div>
+      <div class="svc"><span class="k">Later</span><h3>SES, S3 + CloudFront</h3><p>Invite emails and public hosting come in the last step. Until then, the invite link appears in the app to copy, and the frontend runs locally against the deployed API.</p><span class="why">SES costs $0.10 per 1,000 emails.</span></div>
+    </div>
+  </section>
+
+  <!-- ================= FLOWS ================= -->
+  <section id="flows">
+    <div class="sec-head">
+      <span class="eyebrow">Flows</span>
+      <h2>What happens, request by request</h2>
+    </div>
+    <div class="flow-tabs" role="tablist" aria-label="Flows">
+      <button role="tab" id="tab-auth" aria-selected="true" aria-controls="flow-auth">Sign up &amp; log in</button>
+      <button role="tab" id="tab-live" aria-selected="false" aria-controls="flow-live">Edit item → live update</button>
+      <button role="tab" id="tab-share" aria-selected="false" aria-controls="flow-share">Share &amp; accept invite</button>
+    </div>
+
+    <div class="panel" role="tabpanel" id="flow-auth" aria-labelledby="tab-auth">
+<pre class="mermaid">
+sequenceDiagram
+  actor N as Noa
+  participant App as Browser app
+  participant C as Cognito
+  participant API as HTTP API + api Lambda
+  N->>App: email + password
+  App->>C: SignUp
+  C-->>N: email with 6-digit code
+  N->>App: enters code
+  App->>C: ConfirmSignUp
+  App->>C: InitiateAuth (USER_PASSWORD_AUTH)
+  C-->>App: id, access and refresh tokens
+  App->>API: GET /lists (Authorization: Bearer access token)
+  API-->>App: [] (no lists yet)
+  Note over App,C: Later visits use the refresh token (REFRESH_TOKEN_AUTH)
+</pre>
+    </div>
+
+    <div class="panel" role="tabpanel" id="flow-live" aria-labelledby="tab-live" hidden>
+<pre class="mermaid">
+sequenceDiagram
+  actor D as Dana
+  actor N as Noa
+  participant WS as WebSocket API + ws Lambda
+  participant API as HTTP API + api Lambda
+  participant DB as DynamoDB
+  N->>WS: connect wss://...?token=access token
+  WS->>DB: verify token (Cognito GetUser), save CONN row
+  N->>WS: {"action":"subscribe","listId":"L1"}
+  WS->>DB: put LIST#L1 / CONN#id (TTL 2h)
+  D->>API: PATCH /lists/L1/items/I7 {"done":true}
+  API->>DB: GetItem MEMBER row (is Dana a member?)
+  API->>DB: UpdateItem ITEM#I7
+  API->>DB: Query LIST#L1, SK begins_with CONN#
+  API->>WS: PostToConnection for each subscriber
+  WS-->>N: {"type":"item.updated","item":{...}}
+  API-->>D: 200 + updated item
+  Note over API,WS: GoneException means the socket is stale, so its CONN row is deleted
+</pre>
+    </div>
+
+    <div class="panel" role="tabpanel" id="flow-share" aria-labelledby="tab-share" hidden>
+<pre class="mermaid">
+sequenceDiagram
+  actor N as Noa (owner)
+  actor A as Avi (invitee)
+  participant App as Browser app
+  participant API as HTTP API + api Lambda
+  participant DB as DynamoDB
+  participant SES as SES
+  N->>API: POST /lists/L1/invites {"email":"avi@example.com"}
+  API->>DB: put INVITE#token + LIST#L1/INVITE#email (TTL 7 days)
+  API->>SES: send email with link /invite/token (step 5)
+  API-->>N: 201 + link (step 4 shows it to copy)
+  A->>App: opens link
+  App->>App: no session, so remember token and show sign up / log in
+  A->>App: signs up or logs in (Cognito)
+  App->>API: POST /invites/token/accept
+  API->>DB: load invite, check expiry, check email == token's email
+  API->>DB: put MEMBER + USER#avi/LIST#L1, delete invite rows
+  API-->>App: 200 {"listId":"L1"}
+  API--)N: live: member.joined
+</pre>
+    </div>
+    <p class="flow-note" id="flow-note">A new account gets its first tokens right after confirming. No list exists yet, so the app opens on an empty "My lists" page with a prompt to create a list.</p>
+  </section>
+
+  <!-- ================= DATA ================= -->
+  <section id="data">
+    <div class="sec-head">
+      <span class="eyebrow">Data model</span>
+      <h2>One DynamoDB table: <code>PK</code> + <code>SK</code></h2>
+      <p>Every screen reads with one query. A list page is <code>Query PK = LIST#id</code>, which returns the metadata, items, members and pending invites in one round trip. No secondary index is needed yet.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>PK</th><th>SK</th><th>Attributes</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td><code>USER#{sub}</code></td><td><code>LIST#{listId}</code></td><td>role, joinedAt</td><td>"My lists": query by user, then BatchGet each list's META</td></tr>
+          <tr><td><code>LIST#{listId}</code></td><td><code>META</code></td><td>name, ownerId, createdAt, updatedAt</td><td>List name and owner</td></tr>
+          <tr><td><code>LIST#{listId}</code></td><td><code>ITEM#{itemId}</code></td><td>text, qty, done, position, updatedBy, updatedAt</td><td>Items. The ID is a ULID, so items sort by creation time.</td></tr>
+          <tr><td><code>LIST#{listId}</code></td><td><code>MEMBER#{sub}</code></td><td>email, role (owner | editor)</td><td>Access check on every request</td></tr>
+          <tr><td><code>LIST#{listId}</code></td><td><code>INVITE#{email}</code></td><td>token, invitedBy, expiresAt (TTL)</td><td>"Pending" rows in the share sheet</td></tr>
+          <tr><td><code>INVITE#{token}</code></td><td><code>META</code></td><td>listId, email, invitedBy, expiresAt (TTL)</td><td>Looking up the invite from the email link</td></tr>
+          <tr><td><code>LIST#{listId}</code></td><td><code>CONN#{connectionId}</code></td><td>sub, expiresAt (TTL)</td><td>Who to push a change to</td></tr>
+          <tr><td><code>CONN#{connectionId}</code></td><td><code>META</code></td><td>sub, listId, expiresAt (TTL)</td><td>Cleanup on disconnect</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footnote">The list name lives only in <code>META</code>, so renaming a list is one write. Deleting a list queries <code>PK = LIST#id</code>, deletes those rows in batches, and also deletes each member's <code>USER#…/LIST#id</code> row.</p>
+  </section>
+
+  <!-- ================= API ================= -->
+  <section id="api">
+    <div class="sec-head">
+      <span class="eyebrow">API</span>
+      <h2>REST routes</h2>
+      <p>Every route needs a Cognito access token. The JWT authorizer rejects bad tokens before Lambda runs, so a bad request costs nothing. The Lambda then checks the <code>MEMBER</code> row for the list.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Who</th><th>Does</th><th>Pushes</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method">GET</span></td><td><code>/lists</code></td><td>any user</td><td>My lists, with item counts</td><td>—</td></tr>
+          <tr><td><span class="method">POST</span></td><td><code>/lists</code></td><td>any user</td><td>Create a list. The caller becomes the owner.</td><td>—</td></tr>
+          <tr><td><span class="method">GET</span></td><td><code>/lists/{listId}</code></td><td>member</td><td>Metadata, items, members, pending invites</td><td>—</td></tr>
+          <tr><td><span class="method patch">PATCH</span></td><td><code>/lists/{listId}</code></td><td>member</td><td>Rename</td><td><code>list.updated</code></td></tr>
+          <tr><td><span class="method del">DELETE</span></td><td><code>/lists/{listId}</code></td><td>owner</td><td>Delete the list and everything in it</td><td><code>list.deleted</code></td></tr>
+          <tr><td><span class="method">POST</span></td><td><code>/lists/{listId}/items</code></td><td>member</td><td>Add an item</td><td><code>item.created</code></td></tr>
+          <tr><td><span class="method patch">PATCH</span></td><td><code>/lists/{listId}/items/{itemId}</code></td><td>member</td><td>Edit the text, qty, done or position</td><td><code>item.updated</code></td></tr>
+          <tr><td><span class="method del">DELETE</span></td><td><code>/lists/{listId}/items/{itemId}</code></td><td>member</td><td>Remove an item</td><td><code>item.deleted</code></td></tr>
+          <tr><td><span class="method">POST</span></td><td><code>/lists/{listId}/invites</code></td><td>owner</td><td>Invite an email address. Returns the link.</td><td>—</td></tr>
+          <tr><td><span class="method del">DELETE</span></td><td><code>/lists/{listId}/invites/{email}</code></td><td>owner</td><td>Cancel a pending invite</td><td>—</td></tr>
+          <tr><td><span class="method">GET</span></td><td><code>/invites/{token}</code></td><td>any user</td><td>Show "Noa invited you to …"</td><td>—</td></tr>
+          <tr><td><span class="method">POST</span></td><td><code>/invites/{token}/accept</code></td><td>invited email</td><td>Join the list</td><td><code>member.joined</code></td></tr>
+          <tr><td><span class="method del">DELETE</span></td><td><code>/lists/{listId}/members/{sub}</code></td><td>owner, or yourself</td><td>Remove a member, or leave the list</td><td><code>member.removed</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= API GATEWAY ================= -->
+  <section id="gateway">
+    <div class="sec-head">
+      <span class="eyebrow">API Gateway</span>
+      <h2>Two APIs: HTTP for requests, WebSocket for live updates</h2>
+      <p>Both are defined in the CDK <code>ApiStack</code>. We use the HTTP API type, not the older REST API type. It costs about $1 per million calls instead of $3.50, and it checks Cognito tokens with no extra code. We don't need anything that only the REST API type offers, such as API keys, usage plans or response caching.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Setting</th><th>HTTP API</th><th>WebSocket API</th></tr></thead>
+        <tbody>
+          <tr><td>Routes</td><td>13 routes (table above) → <code>api</code> Lambda, proxy integration (payload v2)</td><td><code>$connect</code>, <code>$disconnect</code>, <code>subscribe</code>, <code>unsubscribe</code>, <code>$default</code> → <code>ws</code> Lambda</td></tr>
+          <tr><td>Auth</td><td>Built-in JWT authorizer: issuer is the user pool URL, audience is the app client ID</td><td>Token in the <code>?token=</code> query string, checked in <code>$connect</code> with Cognito <code>GetUser</code>. Connection refused if the token is invalid.</td></tr>
+          <tr><td>Stage</td><td><code>$default</code>, auto-deploy</td><td><code>dev</code>, auto-deploy</td></tr>
+          <tr><td>CORS</td><td>Allow <code>http://localhost:5173</code> now, and the CloudFront domain in step 5. Methods GET, POST, PATCH, DELETE. Header <code>Authorization</code>, <code>Content-Type</code>.</td><td>Not applicable</td></tr>
+          <tr><td>Throttling</td><td>Stage default: rate 20 req/s, burst 50. This caps the bill if something loops.</td><td>Same limits on the stage</td></tr>
+          <tr><td>Logging</td><td>Off in dev. Lambda logs are enough and kept for 2 weeks.</td><td>Off in dev</td></tr>
+          <tr><td>Outputs</td><td><code>ApiUrl</code> → frontend <code>VITE_API_URL</code></td><td><code>WsUrl</code> → frontend <code>VITE_WS_URL</code>; callback URL → <code>api</code> Lambda env</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footnote">Cheaper alternative we decided against: Lambda Function URLs have no per-request charge. But bad tokens would then reach Lambda, and we would have to write the token check, routing and throttling ourselves. At this scale it saves about $0.03 a month.</p>
+  </section>
+
+  <!-- ================= REALTIME ================= -->
+  <section id="realtime">
+    <div class="sec-head">
+      <span class="eyebrow">Decision</span>
+      <h2>Live updates: WebSocket API or Pusher?</h2>
+      <p>Both cost $0 or close to it for a project this size. I recommend the AWS WebSocket API. It needs no third-party account and no extra keys, it uses the same Cognito identity, and it has no hard cap on connections.</p>
+    </div>
+    <div class="decision">
+      <div class="opt pick">
+        <span class="badge">Recommended</span>
+        <h3>API Gateway WebSocket</h3>
+        <ul>
+          <li>About $1 per million messages and $0.25 per million connection-minutes</li>
+          <li>Example: 10 people for 2 hours a day is about 36k connection-minutes a month, roughly $0.01</li>
+          <li>Auth on <code>$connect</code> with the same access token. Cognito <code>GetUser</code> verifies it, so we don't need a JWT library.</li>
+          <li>Everything is in one CDK app and one bill</li>
+        </ul>
+      </div>
+      <div class="opt">
+        <span class="badge alt">Alternative</span>
+        <h3>Pusher Channels (free Sandbox)</h3>
+        <ul>
+          <li>$0, capped at 100 concurrent connections and 200k messages a day</li>
+          <li>Private channels still need an auth endpoint, so we'd write a Lambda route anyway</li>
+          <li>Requires a separate account, with app keys stored in Secrets or SSM</li>
+          <li>Going past the cap means a paid plan (from about $49 a month)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Socket message</th><th>Direction</th><th>Shape</th></tr></thead>
+        <tbody>
+          <tr><td><code>subscribe</code></td><td>app → server</td><td><code>{"action":"subscribe","listId":"L1"}</code>, sent when a list page opens</td></tr>
+          <tr><td><code>unsubscribe</code></td><td>app → server</td><td><code>{"action":"unsubscribe","listId":"L1"}</code></td></tr>
+          <tr><td><code>item.*</code> / <code>list.*</code> / <code>member.*</code></td><td>server → app</td><td><code>{"type":"item.updated","listId":"L1","item":{…},"by":"sub"}</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footnote">API Gateway closes idle sockets after 10 minutes and all sockets after 2 hours. The app pings every 5 minutes, reconnects when the socket closes, and reloads the list after reconnecting, so changes made while it was disconnected are not lost.</p>
+  </section>
+
+  <!-- ================= COST ================= -->
+  <section id="cost">
+    <div class="sec-head">
+      <span class="eyebrow">Cost</span>
+      <h2>Estimated monthly bill at hobby scale</h2>
+      <p>Assumes about 20 users, 30k API calls and 30k socket messages a month. These are list prices. Always-free allowances (Cognito, Lambda and DynamoDB storage) cover most of it.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Service</th><th>Price</th><th>Free allowance</th><th class="num">Est. / month</th></tr></thead>
+        <tbody>
+          <tr><td>Cognito (Lite)</td><td>per monthly active user</td><td>10,000 MAU</td><td class="num">$0.00</td></tr>
+          <tr><td>Lambda (arm64)</td><td>per request + GB-second</td><td>1M requests + 400k GB-s</td><td class="num">$0.00</td></tr>
+          <tr><td>DynamoDB on-demand</td><td>per million read/write units</td><td>25 GB storage</td><td class="num">≈ $0.05</td></tr>
+          <tr><td>HTTP API</td><td>≈ $1 per million calls</td><td>—</td><td class="num">≈ $0.03</td></tr>
+          <tr><td>WebSocket API</td><td>≈ $1 per million msgs + $0.25 per million conn-min</td><td>—</td><td class="num">≈ $0.05</td></tr>
+          <tr><td>SES (step 5)</td><td>$0.10 per 1,000 emails</td><td>—</td><td class="num">≈ $0.01</td></tr>
+          <tr><td>S3 + CloudFront (step 5)</td><td>storage + transfer</td><td>CloudFront 1 TB out</td><td class="num">≈ $0.02</td></tr>
+          <tr><td><b>Total</b></td><td></td><td></td><td class="num"><b>&lt; $0.25</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footnote">Things that would add cost and that we avoid: NAT gateways, VPC Lambdas, RDS, provisioned concurrency, an authorizer Lambda, DynamoDB Streams with a fan-out Lambda, and CloudWatch logs kept forever (we set 2-week retention).</p>
+  </section>
+
+  <!-- ================= STEPS ================= -->
+  <section id="steps">
+    <div class="sec-head">
+      <span class="eyebrow">Build plan</span>
+      <h2>Five steps, each one deployable</h2>
+      <p>I write the code and the CDK for a step. You run <code>cdk deploy</code> and test it on AWS, and we move on only when the "done when" check passes.</p>
+    </div>
+    <ol class="steps">
+      <li>
+        <div class="step-body">
+          <h3>Sign up and log in</h3>
+          <ul>
+            <li>CDK app skeleton with a dev stage and an <code>AuthStack</code>: user pool, email sign-in, self sign-up, and an app client with no secret using <code>USER_PASSWORD_AUTH</code></li>
+            <li>Frontend: log in, sign up, confirm code, forgot password, and an empty "My lists" page</li>
+          </ul>
+          <div class="done"><b>Done when:</b> you sign up with a real email, receive the code, log in, refresh the page and are still logged in.</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-body">
+          <h3>Lists and items</h3>
+          <ul>
+            <li><code>DataStack</code>: the table with TTL enabled. <code>ApiStack</code>: HTTP API, JWT authorizer, and the <code>api</code> Lambda with list and item routes</li>
+            <li>Frontend: My lists, list page, add/edit/check/delete items</li>
+          </ul>
+          <div class="done"><b>Done when:</b> you create, rename and delete lists and items, and everything is still there after a reload. A request without a token gets a 401.</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-body">
+          <h3>Live updates</h3>
+          <ul>
+            <li>WebSocket API and the <code>ws</code> Lambda (connect, disconnect, subscribe). The <code>api</code> Lambda pushes after each write.</li>
+            <li>Frontend: socket client with reconnect, highlight on remote changes, and the "who's here" pill</li>
+          </ul>
+          <div class="done"><b>Done when:</b> you open the same list in two browsers, and a change in one appears in the other within about a second.</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-body">
+          <h3>Sharing</h3>
+          <ul>
+            <li>Routes for invites, accept, cancel, remove member and leave list. Accept checks that the logged-in email matches the invite email.</li>
+            <li>Frontend: share sheet, invite page, and the sign-up path that returns to the invite. The invite link is shown with a copy button.</li>
+          </ul>
+          <div class="done"><b>Done when:</b> a second account opens the link, signs up, sees the list and gets live updates. Once removed, that account gets a 403.</div>
+        </div>
+      </li>
+      <li class="later">
+        <div class="step-body">
+          <h3>Email and hosting (last)</h3>
+          <ul>
+            <li>SES identity, a request for production access, and the invite email template</li>
+            <li>S3 + CloudFront for the frontend. Optional: Google sign-in and CI.</li>
+          </ul>
+          <div class="done"><b>Done when:</b> an invite reaches someone's inbox, and the app works from its public URL.</div>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================= TICKETS ================= -->
+  <section id="tickets">
+    <div class="sec-head">
+      <span class="eyebrow">Backlog</span>
+      <h2>Tickets</h2>
+      <p>Tickets are grouped by epic and ordered CDK, then backend, then frontend. Each ticket shows the build step it belongs to. Click a ticket to see its acceptance criteria. Points use the usual 1, 2, 3, 5 scale.</p>
+    </div>
+    <div class="filters" role="group" aria-label="Filter by epic">
+      <button type="button" data-epic="all" aria-pressed="true">All</button>
+      <button type="button" data-epic="cdk" aria-pressed="false">CDK</button>
+      <button type="button" data-epic="be" aria-pressed="false">Backend</button>
+      <button type="button" data-epic="fe" aria-pressed="false">Frontend</button>
+      <span class="count" id="tk-count"></span>
+    </div>
+    <div id="backlog" style="display:grid;gap:16px"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var notes = {
+    auth: 'A new account gets its first tokens right after confirming. No list exists yet, so the app opens on an empty "My lists" page with a prompt to create a list.',
+    live: 'The writer gets the normal HTTP response. Everyone else subscribed to that list gets the change over their socket. The writer’s own tab ignores echoes that carry its own user ID.',
+    share: 'Until step 5 the API returns the invite link and the share sheet shows it with a copy button. Step 5 only adds the SES call, and the flow stays the same.'
+  };
+  var tabs = document.querySelectorAll('.flow-tabs [role="tab"]');
+  var note = document.getElementById('flow-note');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+      });
+      note.textContent = notes[tab.id.replace('tab-', '')];
+    });
+  });
+})();
+
+(function () {
+  var EPICS = {
+    cdk: { name: 'CDK infrastructure', label: 'CDK' },
+    be: { name: 'Backend (Lambda, Python)', label: 'Backend' },
+    fe: { name: 'Frontend (web app)', label: 'Frontend' }
+  };
+  var PRIO = { high: ['↑', 'High'], med: ['=', 'Medium'], low: ['↓', 'Low'] };
+  var T = [
+    // ---------- CDK ----------
+    { key: 'ST-1', type: 'task', epic: 'cdk', step: 1, pri: 'high', pts: 2,
+      title: 'CDK app skeleton with a dev stage',
+      desc: 'Create `infrastructure/` with `app.py`, `cdk.json`, `requirements.txt`, and a README that lists the deploy commands. Region `eu-central-1`. Stack names are prefixed `ShopTogether-dev-`. Every resource gets the tags `project=shoptogether` and `stage=dev`.',
+      ac: ['`cdk synth` succeeds with no AWS calls beyond the context lookup', 'Stage name comes from context (`-c stage=dev`), defaulting to dev', 'A shared helper sets Lambda defaults: Python 3.12, arm64, 256 MB, 10 s timeout, 2-week log retention', 'In dev, resources use `RemovalPolicy.DESTROY`, so `cdk destroy` leaves nothing behind'],
+      deps: [] },
+    { key: 'ST-2', type: 'story', epic: 'cdk', step: 1, pri: 'high', pts: 3,
+      title: 'AuthStack: Cognito user pool and app client',
+      desc: 'Create a user pool on the Lite feature plan. Sign-in uses email, self sign-up is on, and email is verified with a code sent by Cognito’s built-in email. Create an app client with no secret.',
+      ac: ['Password policy: at least 8 characters, with upper case, lower case and a digit', 'App client auth flows: `USER_PASSWORD_AUTH` and `REFRESH_TOKEN_AUTH` only', 'Token validity: access and ID tokens 1 hour, refresh token 30 days', 'Account recovery by email only', 'Outputs: `UserPoolId`, `UserPoolClientId`, `Region`'],
+      deps: ['ST-1'] },
+    { key: 'ST-3', type: 'task', epic: 'cdk', step: 2, pri: 'high', pts: 2,
+      title: 'DataStack: single DynamoDB table',
+      desc: 'Create one table with string keys `PK` and `SK`, on-demand billing, and TTL on the `expiresAt` attribute.',
+      ac: ['Billing mode is PAY_PER_REQUEST', 'TTL is enabled on `expiresAt`', 'Point-in-time recovery is off in dev', 'Output: `TableName`, and the table is exposed to other stacks'],
+      deps: ['ST-1'] },
+    { key: 'ST-4', type: 'story', epic: 'cdk', step: 2, pri: 'high', pts: 5,
+      title: 'ApiStack: HTTP API, JWT authorizer and api Lambda',
+      desc: 'Create an HTTP API with the 13 routes, all going to the `api` Lambda through a payload v2 proxy integration. The built-in JWT authorizer uses the user pool as issuer and the app client ID as audience.',
+      ac: ['Every route requires the authorizer. A request without a token gets 401 before Lambda runs.', 'CORS allows `http://localhost:5173`, methods GET, POST, PATCH, DELETE and OPTIONS, and headers `Authorization` and `Content-Type`', 'Stage throttling: rate 20, burst 50', 'The Lambda has read/write access to the table only, and gets `TABLE_NAME` in its environment', 'Output: `ApiUrl`'],
+      deps: ['ST-2', 'ST-3'] },
+    { key: 'ST-5', type: 'story', epic: 'cdk', step: 3, pri: 'high', pts: 3,
+      title: 'WebSocket API and ws Lambda',
+      desc: 'Add a WebSocket API with the `dev` stage. Routes `$connect`, `$disconnect`, `subscribe`, `unsubscribe` and `$default` all go to the `ws` Lambda.',
+      ac: ['The `ws` Lambda has table access and permission to call Cognito `GetUser`', 'The `api` and `ws` Lambdas both get `execute-api:ManageConnections` and a `WS_CALLBACK_URL` env var', 'Stage throttling matches the HTTP API', 'Output: `WsUrl`'],
+      deps: ['ST-4'] },
+    { key: 'ST-6', type: 'story', epic: 'cdk', step: 5, pri: 'low', pts: 5,
+      title: 'Email and hosting: SES identity, S3 + CloudFront',
+      desc: 'Add an SES email identity for the sender address, and give the `api` Lambda permission to call `ses:SendEmail` from that identity. Host the frontend in a private S3 bucket behind CloudFront with origin access control.',
+      ac: ['SPA routing: CloudFront returns `index.html` for 403 and 404', 'The CloudFront domain is added to the HTTP API CORS origins', 'The `APP_URL` env var on the `api` Lambda points to CloudFront', 'Outputs: `SiteUrl` and `BucketName`. The README explains how to request SES production access.'],
+      deps: ['ST-4'] },
+
+    // ---------- Backend ----------
+    { key: 'ST-7', type: 'task', epic: 'be', step: 2, pri: 'high', pts: 3,
+      title: 'Backend skeleton: router and shared helpers',
+      desc: 'Lay out `backend/api/handler.py` with a small router that matches `routeKey`, for example `PATCH /lists/{listId}`. Add shared modules: `db.py` (table and key helpers), `responses.py` (JSON and error helpers), `auth.py` (reads `sub` from the JWT claims), and `ids.py` (ULID).',
+      ac: ['No dependencies besides boto3', 'Errors return `{"error": {"code", "message"}}` with the matching 400, 403, 404 or 409 status', 'Unexpected exceptions are logged with a request ID and return 500 without a stack trace', 'Request bodies are validated, and unknown fields are rejected'],
+      deps: ['ST-4'] },
+    { key: 'ST-8', type: 'story', epic: 'be', step: 2, pri: 'high', pts: 5,
+      title: 'Lists endpoints',
+      desc: 'Implement `GET /lists`, `POST /lists`, `GET /lists/{listId}`, `PATCH /lists/{listId}` and `DELETE /lists/{listId}`.',
+      ac: ['Create writes META, the owner MEMBER row and the USER row in one transaction', '`GET /lists` makes one query on `USER#sub` plus a BatchGet of the META rows, and returns item and done counts', '`GET /lists/{id}` makes one query on `PK = LIST#id` and returns meta, items, members and invites', 'Non-members get 404, which doesn’t reveal that the list exists', 'Only the owner can delete. Delete removes every `LIST#id` row and each member’s USER row.', 'List name: 1 to 80 characters after trimming'],
+      deps: ['ST-7'] },
+    { key: 'ST-9', type: 'story', epic: 'be', step: 2, pri: 'high', pts: 3,
+      title: 'Items endpoints',
+      desc: 'Implement `POST /lists/{listId}/items`, `PATCH /lists/{listId}/items/{itemId}` and `DELETE /lists/{listId}/items/{itemId}`.',
+      ac: ['Item ID is a ULID. `updatedBy` and `updatedAt` are set on every write.', 'Validation: text is 1 to 200 characters, qty is an optional string of up to 20 characters, done is a boolean, position is a number', 'Writes to META `updatedAt` so "My lists" can sort by recent activity', 'Editing an item that doesn’t exist returns 404 (conditional write)'],
+      deps: ['ST-8'] },
+    { key: 'ST-10', type: 'story', epic: 'be', step: 3, pri: 'high', pts: 5,
+      title: 'ws Lambda: connect, subscribe and disconnect',
+      desc: 'On `$connect`, verify the access token from `?token=` with Cognito `GetUser` and save `CONN#id`. On `subscribe`, check that the user is a member of the list, then write `LIST#id / CONN#id`. On `$disconnect`, delete both rows.',
+      ac: ['An invalid or expired token makes `$connect` return 401, and the socket is never opened', 'Subscribing to a list you don’t belong to returns an error message on the socket and saves nothing', 'Connection rows have a 2-hour TTL as a safety net', 'Subscribe and disconnect broadcast `presence.joined` and `presence.left` for the "Dana here" pill', '`$default` answers pings with `{"type":"pong"}`'],
+      deps: ['ST-5', 'ST-8'] },
+    { key: 'ST-11', type: 'task', epic: 'be', step: 3, pri: 'high', pts: 3,
+      title: 'Broadcast changes from the api Lambda',
+      desc: 'Add `shared/broadcast.py`. After a write succeeds, query `LIST#id` with `SK begins_with CONN#` and call `post_to_connection` for each subscriber.',
+      ac: ['Every write route sends its event: `item.*`, `list.*` or `member.*`', 'Each event includes `listId`, `by` (the writer’s sub) and the full changed object', 'A `GoneException` deletes that connection’s rows. Other errors are logged and don’t fail the HTTP request.', 'The HTTP response is not delayed by more than about 100 ms with 10 subscribers'],
+      deps: ['ST-9', 'ST-10'] },
+    { key: 'ST-12', type: 'story', epic: 'be', step: 4, pri: 'med', pts: 5,
+      title: 'Invites and membership',
+      desc: 'Implement `POST /lists/{listId}/invites`, `DELETE /lists/{listId}/invites/{email}`, `GET /invites/{token}`, `POST /invites/{token}/accept` and `DELETE /lists/{listId}/members/{sub}`.',
+      ac: ['Only the owner can invite. Emails are lowercased. The token comes from `secrets.token_urlsafe(32)`. TTL is 7 days. Inviting the same email again replaces the old token.', 'The invite response includes the link `APP_URL/invite/{token}`', 'Accept reads the caller’s email with Cognito `GetUser`, using the bearer token. The email must match the invite, or the call returns 403.', 'Accept writes MEMBER and USER rows and deletes both invite rows in one transaction, then broadcasts `member.joined`', 'Inviting someone who is already a member returns 409. The owner can’t be removed. A member can remove themselves (leave).'],
+      deps: ['ST-11'] },
+    { key: 'ST-13', type: 'task', epic: 'be', step: 5, pri: 'low', pts: 2,
+      title: 'Send the invite email with SES',
+      desc: 'Send a plain HTML and text email from `POST /lists/{listId}/invites`, using the copy from screen 6.',
+      ac: ['Subject: "{name} shared “{list}” with you"', 'If SES fails, the invite is still saved, and the response says `emailSent: false` and includes the link', 'Sender address and `APP_URL` come from env vars'],
+      deps: ['ST-6', 'ST-12'] },
+
+    // ---------- Frontend ----------
+    { key: 'ST-14', type: 'task', epic: 'fe', step: 1, pri: 'high', pts: 3,
+      title: 'Frontend skeleton: Vite + React, routes and theme',
+      desc: 'Create `frontend/` with Vite + React, pending your confirmation of the framework. Routes: `/login`, `/signup`, `/confirm`, `/forgot`, `/`, `/lists/:id`, `/invite/:token`.',
+      ac: ['Config comes from `.env.local` with `VITE_REGION`, `VITE_USER_POOL_CLIENT_ID`, `VITE_API_URL` and `VITE_WS_URL`', 'Colors and type follow the screens on this page, in light and dark themes', 'Layout is mobile-first and becomes a centered column on desktop', '`npm run build` produces static files only'],
+      deps: ['ST-2'] },
+    { key: 'ST-15', type: 'story', epic: 'fe', step: 1, pri: 'high', pts: 5,
+      title: 'Sign up, confirm, log in and session handling',
+      desc: 'Call the Cognito JSON API directly with `fetch`, without Amplify: SignUp, ConfirmSignUp, ResendConfirmationCode, InitiateAuth, ForgotPassword and ConfirmForgotPassword.',
+      ac: ['Access and ID tokens stay in memory. Only the refresh token goes to localStorage.', 'The app refreshes tokens 5 minutes before they expire, and on a 401 retries once', 'Log out clears the tokens and returns to `/login`', 'Protected routes send you to `/login?next=…` and return you there after you log in', 'Cognito errors are shown in plain words, for example "That code has expired. We sent a new one."'],
+      deps: ['ST-14'] },
+    { key: 'ST-16', type: 'story', epic: 'fe', step: 2, pri: 'high', pts: 3,
+      title: 'API client and the My lists screen',
+      desc: 'Add `api.js`, a small fetch wrapper that adds the bearer token and handles errors. Build screen 3.',
+      ac: ['Create a list from the + button. Rename and delete from the list menu, with a confirmation step in the page.', 'Empty state: "No lists yet. Press + to make your first one."', 'Each card shows the progress bar, member avatars and an "Only you" tag for private lists'],
+      deps: ['ST-15', 'ST-8'] },
+    { key: 'ST-17', type: 'story', epic: 'fe', step: 2, pri: 'high', pts: 5,
+      title: 'List screen: add, edit, check and delete items',
+      desc: 'Build screen 4 without the live parts.',
+      ac: ['Changes appear immediately and roll back with a message if the request fails', 'Tap the text to edit it inline. Enter saves and Escape cancels.', 'Checked items move under a "Done" divider', 'Keyboard: Enter in the add field adds the item and keeps focus there'],
+      deps: ['ST-16', 'ST-9'] },
+    { key: 'ST-18', type: 'story', epic: 'fe', step: 3, pri: 'high', pts: 5,
+      title: 'Live updates client',
+      desc: 'Open the socket with the access token. Send `subscribe` when a list opens and `unsubscribe` when you leave it. Apply incoming events to the open list.',
+      ac: ['Ping every 5 minutes. Reconnect with backoff (1, 2, 4 … up to 30 s), then reload the list.', 'Events that carry your own `by` are ignored, since the change is already applied', 'A changed row highlights for 1.5 s, and a toast says "Dana checked off Eggs"', 'The "here now" pill follows `presence.*` events', 'If the open list is deleted, the app returns to My lists with a message'],
+      deps: ['ST-17', 'ST-11'] },
+    { key: 'ST-19', type: 'story', epic: 'fe', step: 4, pri: 'med', pts: 5,
+      title: 'Share sheet and invite acceptance',
+      desc: 'Build screen 5 (share sheet) and screen 6 (`/invite/:token`).',
+      ac: ['The owner invites by email and sees the link with a Copy button. Pending invites show the time until they expire, and can be cancelled.', 'The owner can remove members. Members can leave the list.', 'If you open `/invite/:token` while logged out, the token is kept through sign up and confirmation, and accepted after login', 'If the email doesn’t match, the page says "This invite was sent to a***@example.com. Log in with that email to accept."', 'After accepting, the app opens the list'],
+      deps: ['ST-18', 'ST-12'] },
+    { key: 'ST-20', type: 'task', epic: 'fe', step: 5, pri: 'low', pts: 2,
+      title: 'Deploy the frontend to S3 + CloudFront',
+      desc: 'Write a deploy script that builds the app, syncs it to the bucket and invalidates CloudFront. You run it yourself.',
+      ac: ['Production `.env` values come from the CDK outputs', 'Long cache headers for hashed assets, `no-cache` for `index.html`', 'Smoke test: sign up, create a list, invite a second account, and see a live update, all from the public URL'],
+      deps: ['ST-6', 'ST-19'] }
+  ];
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+  }
+  function rich(s) { return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>'); }
+  var ICON = {
+    story: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 1h5v8L5 7 2.5 9z" fill="#fff"/></svg>',
+    task: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5.2l2 2L8 3" stroke="#fff" stroke-width="1.6" fill="none"/></svg>'
+  };
+
+  var root = document.getElementById('backlog');
+  var html = '';
+  Object.keys(EPICS).forEach(function (e) {
+    var list = T.filter(function (t) { return t.epic === e; });
+    var pts = list.reduce(function (a, t) { return a + t.pts; }, 0);
+    html += '<div class="epic-group" data-epic="' + e + '">' +
+      '<div class="epic-head"><span class="lozenge ' + e + '">' + EPICS[e].label + '</span><h3>' + EPICS[e].name + '</h3>' +
+      '<span class="meta">' + list.length + ' tickets · ' + pts + ' pts</span></div>';
+    list.forEach(function (t) {
+      html += '<details class="tk" id="' + t.key + '"><summary>' +
+        '<span class="tk-type ' + t.type + '" title="' + (t.type === 'story' ? 'Story' : 'Task') + '">' + ICON[t.type] + '</span>' +
+        '<span class="tk-key">' + t.key + '</span>' +
+        '<span class="tk-title">' + rich(t.title) + '</span>' +
+        '<span class="tk-right"><span class="lozenge todo">To do</span><span class="lozenge ' + e + '">Step ' + t.step + '</span>' +
+        '<span class="prio ' + t.pri + '" title="Priority: ' + PRIO[t.pri][1] + '">' + PRIO[t.pri][0] + '</span>' +
+        '<span class="pts" title="Story points">' + t.pts + '</span></span>' +
+        '</summary><div class="tk-body">' +
+        '<p>' + rich(t.desc) + '</p>' +
+        '<div style="display:grid;gap:8px"><h4>Acceptance criteria</h4><ul>' +
+        t.ac.map(function (a) { return '<li><span>' + rich(a) + '</span></li>'; }).join('') + '</ul></div>' +
+        '<div class="tk-fields"><span>Type <b>' + (t.type === 'story' ? 'Story' : 'Task') + '</b></span>' +
+        '<span>Priority <b>' + PRIO[t.pri][1] + '</b></span><span>Points <b>' + t.pts + '</b></span>' +
+        '<span>Blocked by <b>' + (t.deps.length ? t.deps.map(function (d) { return '<a href="#' + d + '">' + d + '</a>'; }).join(', ') : 'none') + '</b></span></div>' +
+        '</div></details>';
+    });
+    html += '</div>';
+  });
+  root.innerHTML = html;
+
+  root.addEventListener('click', function (ev) {
+    var a = ev.target.closest('a[href^="#ST-"]');
+    if (!a) return;
+    ev.preventDefault();
+    var d = document.getElementById(a.getAttribute('href').slice(1));
+    if (d) { d.open = true; d.scrollIntoView({ block: 'center' }); }
+  });
+
+  var count = document.getElementById('tk-count');
+  function setFilter(epic) {
+    var n = 0, p = 0;
+    document.querySelectorAll('.epic-group').forEach(function (g) {
+      var on = epic === 'all' || g.getAttribute('data-epic') === epic;
+      g.hidden = !on;
+    });
+    T.forEach(function (t) { if (epic === 'all' || t.epic === epic) { n++; p += t.pts; } });
+    count.textContent = n + ' tickets · ' + p + ' points';
+    document.querySelectorAll('.filters button').forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-epic') === epic ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('.filters button').forEach(function (b) {
+    b.addEventListener('click', function () { setFilter(b.getAttribute('data-epic')); });
+  });
+  setFilter('all');
+})();
+</script>
+<script type="module">
+  // Standalone copy: artifacts render Mermaid natively, a plain browser needs the library.
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'neutral' });
+  // Render hidden tab panels while visible so their diagrams get real sizes.
+  const hidden = [...document.querySelectorAll('[role="tabpanel"][hidden]')];
+  hidden.forEach(p => { p.hidden = false; });
+  await mermaid.run({ querySelector: 'pre.mermaid' });
+  hidden.forEach(p => { p.hidden = true; });
+</script>
+</body>
+</html>

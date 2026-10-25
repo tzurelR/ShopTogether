@@ -1,0 +1,32 @@
+# Planning docs (local only — not versioned)
+/plan/
+
+# Python
+backend/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node / CDK
+node_modules/
+cdk.out/
+.cdk.staging
+dist/
+infrastructure/.venv/
+infrastructure/cdk.out/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# CDK deploy outputs
+infrastructure/outputs.json
