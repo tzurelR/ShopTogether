@@ -1,0 +1,13 @@
+.account { position: relative; }
+.account-avatar {
+  list-style: none; cursor: pointer; width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 600;
+  background: var(--accent-soft); color: var(--accent);
+}
+.account-avatar::-webkit-details-marker { display: none; }
+.account-menu {
+  position: absolute; right: 0; top: 44px; z-index: 10; width: max-content; max-width: 80vw;
+  display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.4);
+}
+.account-email { overflow-wrap: anywhere; }
