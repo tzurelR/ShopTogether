@@ -1,6 +1,7 @@
 """The single DynamoDB table. Clients are created lazily and reused across warm invocations."""
 
 import os
+from decimal import Decimal
 from functools import cache
 
 import boto3
@@ -65,19 +66,57 @@ def batch_delete(keys: list[dict]) -> None:
 
 # ---------- transactions (low-level client, so values must be serialized) ----------
 
+def _to_dynamo(value):
+    # The serializer rejects floats; DynamoDB numbers are Decimals.
+    if isinstance(value, float):
+        return Decimal(str(value))
+    if isinstance(value, dict):
+        return {k: _to_dynamo(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_to_dynamo(v) for v in value]
+    return value
+
+
 def _serialize(item: dict) -> dict:
-    return {k: _serializer.serialize(v) for k, v in item.items()}
+    return {k: _serializer.serialize(_to_dynamo(v)) for k, v in item.items()}
+
+
+def _with_expressions(op: dict, condition: str | None, names: dict | None, values: dict | None) -> dict:
+    if condition:
+        op["ConditionExpression"] = condition
+    if names:
+        op["ExpressionAttributeNames"] = names
+    if values:
+        op["ExpressionAttributeValues"] = _serialize(values)
+    return op
 
 
 def tx_put(item: dict, condition: str | None = None) -> dict:
     op: dict = {"TableName": table().name, "Item": _serialize(item)}
-    if condition:
-        op["ConditionExpression"] = condition
-    return {"Put": op}
+    return {"Put": _with_expressions(op, condition, None, None)}
 
 
-def tx_delete(key: dict) -> dict:
-    return {"Delete": {"TableName": table().name, "Key": _serialize(key)}}
+def tx_update(
+    key: dict,
+    update: str,
+    *,
+    condition: str | None = None,
+    names: dict | None = None,
+    values: dict | None = None,
+) -> dict:
+    op: dict = {"TableName": table().name, "Key": _serialize(key), "UpdateExpression": update}
+    return {"Update": _with_expressions(op, condition, names, values)}
+
+
+def tx_delete(
+    key: dict,
+    *,
+    condition: str | None = None,
+    names: dict | None = None,
+    values: dict | None = None,
+) -> dict:
+    op: dict = {"TableName": table().name, "Key": _serialize(key)}
+    return {"Delete": _with_expressions(op, condition, names, values)}
 
 
 def transact_write(ops: list[dict]) -> None:

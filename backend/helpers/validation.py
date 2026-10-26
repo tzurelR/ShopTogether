@@ -2,6 +2,7 @@
 
 import base64
 import json
+import math
 from dataclasses import dataclass
 
 from helpers.errors import ValidationError
@@ -49,7 +50,7 @@ def _check_type(name: str, value, field: Field):
         return value
     if field.kind in (int, float):
         allowed = (int,) if field.kind is int else (int, float)
-        if isinstance(value, bool) or not isinstance(value, allowed):
+        if isinstance(value, bool) or not isinstance(value, allowed) or not math.isfinite(value):
             raise ValidationError(f"'{name}' must be a number.")
         return value
     raise TypeError(f"Unsupported field kind for '{name}': {field.kind}")

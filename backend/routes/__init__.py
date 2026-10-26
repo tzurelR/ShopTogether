@@ -1,12 +1,13 @@
 """Route table: "METHOD /path" (the HTTP API routeKey) -> handler(Request) -> response dict.
 
-Each module exports its own ROUTES dict: lists.py (ST-8), items.py (ST-9),
-invites.py and members.py (ST-12).
+Each package exports its own ROUTES dict: lists/ (ST-8), items/ (ST-9),
+invites/ and members/ (ST-12).
 """
 
 from helpers.request import Handler
-from routes import lists
+from routes import items, lists
 
 ROUTES: dict[str, Handler] = {
     **lists.ROUTES,
+    **items.ROUTES,
 }
