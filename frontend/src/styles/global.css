@@ -73,3 +73,6 @@ button, input { font: inherit; color: inherit; }
 }
 
 .brand { font: 700 1.1rem/1 var(--display); color: var(--accent); }
+
+/* Room so the last card is not hidden under the + button. */
+main.page:has(.fab) { padding-bottom: 96px; }

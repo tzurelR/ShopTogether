@@ -1,0 +1,19 @@
+.sheet {
+  border: 1px solid var(--line); border-radius: 18px; padding: 0;
+  background: var(--surface); color: var(--fg);
+  width: min(calc(100% - 32px), 440px);
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.5);
+}
+.sheet::backdrop { background: rgba(10, 14, 11, 0.45); }
+.sheet-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.sheet-title { font-size: 1.15rem; }
+.sheet-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.btn-danger { background: var(--live); color: #fff; }
+
+@media (max-width: 520px) {
+  .sheet {
+    margin: auto 0 0; width: 100%; max-width: 100%;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

@@ -1,0 +1,32 @@
+.list-card { position: relative; padding: 0; }
+.list-card-link {
+  display: flex; flex-direction: column; gap: 6px; padding: 12px 48px 14px 14px;
+  color: inherit; text-decoration: none; border-radius: var(--radius);
+}
+.list-card-link:hover { background: var(--bg); }
+.list-card-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.list-card-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.tag {
+  flex: none; font-size: 0.7rem; font-weight: 600; padding: 3px 7px; border-radius: 6px;
+  background: var(--sunk); color: var(--muted);
+}
+.bar { height: 4px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); transition: width 0.3s ease; }
+
+.list-card-menu { position: absolute; top: 6px; right: 6px; }
+.list-card-menu summary {
+  list-style: none; cursor: pointer; width: 36px; height: 36px; border-radius: 10px;
+  display: grid; place-items: center; font-size: 1.2rem; color: var(--muted);
+}
+.list-card-menu summary::-webkit-details-marker { display: none; }
+.list-card-menu summary:hover { background: var(--sunk); }
+.list-card-menu-items {
+  position: absolute; right: 0; top: 40px; z-index: 5; padding: 6px; min-width: 150px;
+  display: flex; flex-direction: column; box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.4);
+}
+.list-card-menu-items button {
+  text-align: left; background: none; border: 0; padding: 10px 12px; border-radius: 8px; cursor: pointer;
+}
+.list-card-menu-items button:hover { background: var(--sunk); }
+.list-card-menu-items .danger { color: var(--live); }
