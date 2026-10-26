@@ -1,0 +1,5 @@
+.auth { justify-content: flex-start; }
+.auth-body { display: flex; flex-direction: column; gap: 16px; margin-top: 12vh; }
+.auth-head { display: flex; flex-direction: column; gap: 6px; }
+.auth-head h1 { font-size: 1.75rem; }
+.auth-footer { margin-top: auto; padding-top: 24px; }

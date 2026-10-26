@@ -1,0 +1,43 @@
+/* Same palette and type as blueprint.html. Light by default, dark follows the OS. */
+:root {
+  --bg: #f5f7f4;
+  --surface: #ffffff;
+  --sunk: #e9eee8;
+  --fg: #18211b;
+  --muted: #5b6a60;
+  --line: #d3dcd4;
+  --accent: #1f7a4d;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcefe3;
+  --live: #d4462f;
+  --live-soft: #fbe3de;
+  --amber: #9a6a00;
+  --amber-soft: #fbefd2;
+
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+  --radius: 12px;
+  --radius-sm: 10px;
+  --column: 560px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111613;
+    --surface: #19201b;
+    --sunk: #0c100d;
+    --fg: #e4ebe5;
+    --muted: #98a89d;
+    --line: #2c3730;
+    --accent: #4cc285;
+    --accent-ink: #08130c;
+    --accent-soft: #173525;
+    --live: #ff7a62;
+    --live-soft: #3a1c16;
+    --amber: #e8b54a;
+    --amber-soft: #352a10;
+    color-scheme: dark;
+  }
+}
