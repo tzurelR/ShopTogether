@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { createList } from "../api/createList.js";
 import { deleteList } from "../api/deleteList.js";
@@ -13,6 +14,7 @@ import ListNameForm from "../components/ListNameForm.jsx";
 import Sheet from "../components/Sheet.jsx";
 
 export default function MyListsPage() {
+  const navigate = useNavigate();
   const [lists, setLists] = useState(null); // null while loading
   const [error, setError] = useState("");
   // { kind: "create" } | { kind: "rename", list } | { kind: "delete", list } | null
@@ -35,8 +37,8 @@ export default function MyListsPage() {
 
   async function handleCreate(name) {
     const list = await createList(name);
-    setLists((current) => [list, ...(current ?? [])]);
     close();
+    navigate(`/lists/${list.id}`);
   }
 
   async function handleRename(name) {
