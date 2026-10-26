@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { createList } from "../api/createList.js";
 import { deleteList } from "../api/deleteList.js";
@@ -15,6 +15,7 @@ import Sheet from "../components/Sheet.jsx";
 
 export default function MyListsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [lists, setLists] = useState(null); // null while loading
   const [error, setError] = useState("");
   // { kind: "create" } | { kind: "rename", list } | { kind: "delete", list } | null
@@ -59,6 +60,8 @@ export default function MyListsPage() {
       <AppBar title="My lists">
         <AccountMenu />
       </AppBar>
+
+      <Alert kind="info">{location.state?.message}</Alert>
 
       {error && (
         <Alert>

@@ -38,3 +38,8 @@
   font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
 }
 .done-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* Someone else just changed this item. */
+.item-flash { animation: item-flash 1.5s ease-out; }
+@keyframes item-flash { from { background: var(--accent-soft); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .item-flash { animation: none; background: var(--accent-soft); } }

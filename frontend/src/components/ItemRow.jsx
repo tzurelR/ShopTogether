@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import "./ItemRow.css";
 
 // One item: checkbox, text (tap to edit: Enter saves, Escape cancels), qty, remove.
-export default function ItemRow({ item, onToggle, onEdit, onDelete }) {
+export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelete }) {
   const pending = item.id.startsWith("tmp-");
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(item.text);
@@ -56,7 +56,7 @@ export default function ItemRow({ item, onToggle, onEdit, onDelete }) {
   }
 
   return (
-    <li className={`item${item.done ? " item-done" : ""}${pending ? " item-pending" : ""}`}>
+    <li className={`item${item.done ? " item-done" : ""}${pending ? " item-pending" : ""}${flash ? " item-flash" : ""}`}>
       <button
         type="button"
         role="checkbox"

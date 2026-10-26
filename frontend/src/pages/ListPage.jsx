@@ -1,15 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ApiError } from "../api/request.js";
 import { createItem } from "../api/createItem.js";
 import { deleteItem } from "../api/deleteItem.js";
 import { getList } from "../api/getList.js";
 import { updateItem } from "../api/updateItem.js";
+import { useAuth } from "../auth/useAuth.js";
 import AddItemForm from "../components/AddItemForm.jsx";
 import Alert from "../components/Alert.jsx";
 import AppBar from "../components/AppBar.jsx";
 import ItemRow from "../components/ItemRow.jsx";
+import LivePill from "../components/LivePill.jsx";
+import Toast from "../components/Toast.jsx";
+import { displayName } from "../lib/displayName.js";
+import { describeEvent } from "../realtime/describeEvent.js";
+import { useListSocket } from "../realtime/useListSocket.js";
 
 // Items with a position first (by position), then by ID (= creation time), like the API.
 function byOrder(a, b) {
@@ -21,11 +27,19 @@ function byOrder(a, b) {
 
 let tempCounter = 0;
 
-// ST-18 adds live updates from other people.
+const FLASH_MS = 1500;
+
 export default function ListPage() {
   const { id: listId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [list, setList] = useState(null);
   const [items, setItems] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [flashing, setFlashing] = useState({}); // itemId -> true while highlighted
+  const [toast, setToast] = useState("");
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
   const [status, setStatus] = useState("loading"); // loading | ready | missing | failed
   const [error, setError] = useState("");
 
@@ -35,6 +49,7 @@ export default function ListPage() {
       const data = await getList(listId);
       setList(data.list);
       setItems(data.items);
+      setMembers(data.members);
       setStatus("ready");
     } catch (err) {
       setStatus(err instanceof ApiError && err.status === 404 ? "missing" : "failed");
@@ -47,6 +62,78 @@ export default function ListPage() {
     load();
   }, [load]);
 
+  // ---------- live updates from other people ----------
+
+  const flash = useCallback((id) => {
+    setFlashing((current) => ({ ...current, [id]: true }));
+    setTimeout(() => setFlashing(({ [id]: _, ...rest }) => rest), FLASH_MS);
+  }, []);
+
+  const clearToast = useCallback(() => setToast(""), []);
+
+  function handleEvent(event) {
+    const mine = event.by === user?.sub;
+    const nameOf = (sub) =>
+      members.find((m) => m.sub === sub)?.email || present.find((p) => p.sub === sub)?.email;
+
+    // These two take you off the page, even when the change came from your own other tab.
+    if (event.type === "list.deleted") {
+      const by = mine ? "" : ` by ${displayName(nameOf(event.by))}`;
+      navigate("/", { replace: true, state: { message: `“${event.list.name}” was deleted${by}.` } });
+      return;
+    }
+    if (event.type === "member.removed" && event.member.sub === user?.sub) {
+      const message = mine ? `You left “${list?.name}”.` : `You were removed from “${list?.name}”.`;
+      navigate("/", { replace: true, state: { message } });
+      return;
+    }
+    // Changes from you are applied too (your other tabs and devices stay in sync),
+    // just without a toast or highlight.
+    const previousItem = event.item && itemsRef.current.find((i) => i.id === event.item.id);
+    switch (event.type) {
+      case "item.created":
+        setItems((current) => {
+          if (current.some((i) => i.id === event.item.id)) return current;
+          // This tab's own add is still waiting for its response, which will swap the
+          // placeholder for the real item. Adding the echo now would show it twice.
+          if (mine && current.some((i) => i.id.startsWith("tmp-") && i.text === event.item.text)) return current;
+          return [...current, event.item];
+        });
+        break;
+      case "item.updated":
+        setItems((current) =>
+          current.some((i) => i.id === event.item.id)
+            ? current.map((i) => (i.id === event.item.id ? event.item : i))
+            : [...current, event.item],
+        );
+        break;
+      case "item.deleted":
+        setItems((current) => current.filter((i) => i.id !== event.item.id));
+        break;
+      case "list.updated":
+        setList((current) => ({ ...current, name: event.list.name }));
+        break;
+      case "member.joined":
+        setMembers((current) => [...current.filter((m) => m.sub !== event.member.sub), event.member]);
+        break;
+      case "member.removed":
+        setMembers((current) => current.filter((m) => m.sub !== event.member.sub));
+        break;
+      default:
+        return;
+    }
+    if (mine) return;
+    if (event.type === "item.created" || event.type === "item.updated") flash(event.item.id);
+    const text = describeEvent(event, { nameOf, previousItem });
+    if (text) setToast(text);
+  }
+
+  const { status: liveStatus, present } = useListSocket(listId, {
+    enabled: status === "ready",
+    onEvent: handleEvent,
+    onReconnect: load, // pick up anything missed while offline
+  });
+
   const replaceItem = (id, next) => setItems((current) => current.map((i) => (i.id === id ? next : i)));
 
   // ---------- optimistic changes: apply now, roll back with a message on failure ----------
@@ -56,7 +143,12 @@ export default function ListPage() {
     const temp = { id: `tmp-${++tempCounter}`, done: false, qty: null, position: null, ...fields };
     setItems((current) => [...current, temp]);
     try {
-      replaceItem(temp.id, await createItem(listId, fields));
+      const created = await createItem(listId, fields);
+      setItems((current) =>
+        current.some((i) => i.id === created.id)
+          ? current.filter((i) => i.id !== temp.id)
+          : current.map((i) => (i.id === temp.id ? created : i)),
+      );
     } catch (err) {
       setItems((current) => current.filter((i) => i.id !== temp.id));
       setError(`Couldn't add “${fields.text}”. ${err.message}`);
@@ -115,7 +207,9 @@ export default function ListPage() {
 
   return (
     <main className="page">
-      <AppBar title={list?.name ?? "List"} back="/" />
+      <AppBar title={list?.name ?? "List"} back="/">
+        {status === "ready" && <LivePill status={liveStatus} present={present} mySub={user?.sub} />}
+      </AppBar>
 
       {error && (
         <Alert>
@@ -135,13 +229,13 @@ export default function ListPage() {
         <>
           {items.length === 0 && <p className="muted small">No items yet. Add the first one below.</p>}
           <ul className="items">
-            {open.map((item) => <ItemRow key={item.id} item={item} {...rowProps} />)}
+            {open.map((item) => <ItemRow key={item.id} item={item} flash={!!flashing[item.id]} {...rowProps} />)}
           </ul>
           {done.length > 0 && (
             <>
               <div className="done-divider">Done · {done.length}</div>
               <ul className="items">
-                {done.map((item) => <ItemRow key={item.id} item={item} {...rowProps} />)}
+                {done.map((item) => <ItemRow key={item.id} item={item} flash={!!flashing[item.id]} {...rowProps} />)}
               </ul>
             </>
           )}
@@ -149,6 +243,7 @@ export default function ListPage() {
           <AddItemForm onAdd={addItem} />
         </>
       )}
+      <Toast message={toast} onDone={clearToast} />
     </main>
   );
 }

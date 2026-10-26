@@ -1,0 +1,13 @@
+.live-pill {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  font-size: 0.75rem; font-weight: 600; padding: 6px 10px; border-radius: 999px;
+  color: var(--live); background: var(--live-soft);
+}
+.live-pill::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+.live-pill-off { color: var(--muted); background: var(--sunk); }
+.live-pill-off::before { animation: none; }
+@keyframes live-pulse { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .live-pill::before { animation: none; } }
