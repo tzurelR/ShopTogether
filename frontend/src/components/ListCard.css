@@ -1,32 +1,46 @@
-.list-card { position: relative; padding: 0; }
-.list-card-link {
-  display: flex; flex-direction: column; gap: 6px; padding: 12px 48px 14px 14px;
-  color: inherit; text-decoration: none; border-radius: var(--radius);
+.lists {
+  list-style: none; margin: 0; padding: 0; background: var(--surface);
+  border-radius: var(--radius); box-shadow: var(--shadow);
 }
-.list-card-link:hover { background: var(--bg); }
-.list-card-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.list-card-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-row { position: relative; display: flex; align-items: center; }
+.list-row:first-child .list-row-link { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+.list-row-link {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px;
+  padding: 0 0 0 14px; min-height: 56px; color: inherit; text-decoration: none;
+}
+.list-row-link:active { background: var(--sunk); }
+.list-row-icon {
+  flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--row-color, var(--accent)); color: #fff;
+}
+/* Text, count and menu sit on the separator line, which starts after the icon. */
+.list-row-text {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;
+  align-self: stretch; padding: 10px 0; border-bottom: 0.5px solid var(--line);
+}
+.list-row-count {
+  align-self: stretch; display: flex; align-items: center; padding: 0 4px 0 8px;
+  color: var(--muted); font-size: 1.0625rem; font-variant-numeric: tabular-nums; border-bottom: 0.5px solid var(--line);
+}
+.lists > .list-row:last-child .list-row-text,
+.lists > .list-row:last-child .list-row-count,
+.lists > .list-row:last-child .list-row-menu summary { border-bottom: 0; }
+.list-row-name { font-size: 1.0625rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-row-sub { font-size: 0.8125rem; color: var(--muted); }
 
-.tag {
-  flex: none; font-size: 0.7rem; font-weight: 600; padding: 3px 7px; border-radius: 6px;
-  background: var(--sunk); color: var(--muted);
+.list-row-menu { align-self: stretch; }
+.list-row-menu summary {
+  list-style: none; cursor: pointer; height: 100%; min-height: 56px; width: 40px; padding-right: 6px;
+  display: grid; place-items: center; font-size: 1.2rem; color: var(--muted); border-bottom: 0.5px solid var(--line);
 }
-.bar { height: 4px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
-.bar i { display: block; height: 100%; background: var(--accent); transition: width 0.3s ease; }
-
-.list-card-menu { position: absolute; top: 6px; right: 6px; }
-.list-card-menu summary {
-  list-style: none; cursor: pointer; width: 36px; height: 36px; border-radius: 10px;
-  display: grid; place-items: center; font-size: 1.2rem; color: var(--muted);
+.list-row-menu summary::-webkit-details-marker { display: none; }
+.list-row-menu-items {
+  position: absolute; right: 8px; top: 48px; z-index: 5; min-width: 170px; padding: 4px;
+  display: flex; flex-direction: column; background: var(--surface); border-radius: 12px;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.35), 0 0 0 0.5px var(--line);
 }
-.list-card-menu summary::-webkit-details-marker { display: none; }
-.list-card-menu summary:hover { background: var(--sunk); }
-.list-card-menu-items {
-  position: absolute; right: 0; top: 40px; z-index: 5; padding: 6px; min-width: 150px;
-  display: flex; flex-direction: column; box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.4);
+.list-row-menu-items button {
+  text-align: left; background: none; border: 0; padding: 11px 12px; border-radius: 8px; cursor: pointer; font-size: 1rem;
 }
-.list-card-menu-items button {
-  text-align: left; background: none; border: 0; padding: 10px 12px; border-radius: 8px; cursor: pointer;
-}
-.list-card-menu-items button:hover { background: var(--sunk); }
-.list-card-menu-items .danger { color: var(--live); }
+.list-row-menu-items button:hover { background: var(--sunk); }
+.list-row-menu-items .danger { color: var(--live); }

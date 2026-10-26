@@ -17,6 +17,8 @@ button, input { font: inherit; color: inherit; }
 
 /* Mobile-first single column; centered and capped on desktop. */
 .page {
+  /* Recomputed here so a list's own --accent color also tints the soft fills. */
+  --accent-soft: color-mix(in srgb, var(--accent) 13%, transparent);
   min-height: 100%;
   max-width: var(--column);
   margin: 0 auto;
@@ -37,7 +39,7 @@ button, input { font: inherit; color: inherit; }
 /* Buttons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  min-height: 44px; padding: 10px 16px; border-radius: var(--radius-sm);
+  min-height: 48px; padding: 12px 18px; border-radius: 12px; font-size: 1.0625rem;
   border: 1px solid transparent; background: var(--accent); color: var(--accent-ink);
   font-weight: 600; cursor: pointer; text-decoration: none;
 }
@@ -49,10 +51,10 @@ button, input { font: inherit; color: inherit; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
 .input {
-  min-height: 44px; padding: 10px 12px; border-radius: var(--radius-sm);
-  border: 1px solid var(--line); background: var(--surface); width: 100%;
+  min-height: 48px; padding: 12px 14px; border-radius: 12px; font-size: 1.0625rem;
+  border: 1px solid transparent; background: var(--sunk); width: 100%;
 }
-.input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.input:focus { border-color: var(--accent); background: var(--bg-elevated); outline: none; box-shadow: 0 0 0 4px var(--accent-soft); }
 .field-hint { font-size: 0.78rem; color: var(--muted); }
 
 /* Messages */
@@ -63,16 +65,15 @@ button, input { font: inherit; color: inherit; }
 /* Cards */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
 
-/* Floating "new" button (My lists). */
-.fab {
-  position: fixed;
-  right: max(16px, env(safe-area-inset-right));
-  bottom: max(20px, env(safe-area-inset-bottom));
-  width: 56px; height: 56px; padding: 0; border-radius: 16px;
-  font-size: 1.6rem; box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.45);
+
+
+
+/* Empty states (no lists, no items). */
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 48px 24px 8px; }
+.empty-icon {
+  width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 6px;
+  background: var(--accent-soft); color: var(--accent); font-size: 1.6rem; font-weight: 600;
 }
-
-.brand { font: 700 1.1rem/1 var(--display); color: var(--accent); }
-
-/* Room so the last card is not hidden under the + button. */
-main.page:has(.fab) { padding-bottom: 96px; }
+.empty-title { font-size: 1.1875rem; font-weight: 600; }
+.empty .muted { max-width: 32ch; }
+.tap-to-add { flex: 1; min-height: 120px; border: 0; background: none; cursor: text; }

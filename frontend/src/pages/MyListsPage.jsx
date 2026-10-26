@@ -8,10 +8,20 @@ import { updateList } from "../api/updateList.js";
 import AccountMenu from "../components/AccountMenu.jsx";
 import Alert from "../components/Alert.jsx";
 import AppBar from "../components/AppBar.jsx";
+import BottomBar from "../components/BottomBar.jsx";
 import ConfirmDelete from "../components/ConfirmDelete.jsx";
 import ListCard from "../components/ListCard.jsx";
 import ListNameForm from "../components/ListNameForm.jsx";
 import Sheet from "../components/Sheet.jsx";
+
+// "8 items left in 3 lists" under the title.
+function summary(lists) {
+  if (!lists?.length) return null;
+  const left = lists.reduce((sum, l) => sum + Math.max(l.itemCount - l.doneCount, 0), 0);
+  const listsWord = lists.length === 1 ? "list" : "lists";
+  if (left === 0) return `All done in ${lists.length} ${listsWord}`;
+  return `${left} ${left === 1 ? "item" : "items"} left in ${lists.length} ${listsWord}`;
+}
 
 export default function MyListsPage() {
   const navigate = useNavigate();
@@ -57,7 +67,7 @@ export default function MyListsPage() {
 
   return (
     <main className="page">
-      <AppBar title="My lists">
+      <AppBar title="My Lists" subtitle={summary(lists)}>
         <AccountMenu />
       </AppBar>
 
@@ -73,14 +83,15 @@ export default function MyListsPage() {
       {lists === null && <p className="muted small">Loading your lists…</p>}
 
       {lists?.length === 0 && !error && (
-        <div className="card stack center">
-          <p><b>No lists yet.</b></p>
-          <p className="muted small">Press + to make your first one.</p>
+        <div className="empty">
+          <div className="empty-icon" aria-hidden="true">✓</div>
+          <p className="empty-title">No lists yet</p>
+          <p className="muted">Tap <b>Add List</b> to make your first one, then share it with the people you shop with.</p>
         </div>
       )}
 
       {lists?.length > 0 && (
-        <div className="stack">
+        <ul className="lists">
           {lists.map((list) => (
             <ListCard
               key={list.id}
@@ -89,12 +100,16 @@ export default function MyListsPage() {
               onDelete={(l) => setSheet({ kind: "delete", list: l })}
             />
           ))}
-        </div>
+        </ul>
       )}
 
-      <button className="btn fab" type="button" aria-label="New list" onClick={() => setSheet({ kind: "create" })}>
-        +
-      </button>
+      <BottomBar
+        right={
+          <button className="toolbar-button" type="button" onClick={() => setSheet({ kind: "create" })}>
+            Add List
+          </button>
+        }
+      />
 
       <Sheet open={sheet?.kind === "create"} title="New list" onClose={close}>
         <ListNameForm submitLabel="Create list" busyLabel="Creating…" onSubmit={handleCreate} onCancel={close} />

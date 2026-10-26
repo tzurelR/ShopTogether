@@ -1,45 +1,57 @@
-.items { list-style: none; margin: 0; padding: 0; }
-.item {
-  display: flex; align-items: center; gap: 10px; min-height: 52px;
-  border-bottom: 1px solid var(--line);
+.items {
+  list-style: none; margin: 0; padding: 0;
+  background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
 }
+.item { display: flex; align-items: flex-start; gap: 12px; padding-left: 14px; min-height: 48px; }
 .item-pending { opacity: 0.6; }
 
-.item-box {
-  flex: none; width: 22px; height: 22px; padding: 0; border-radius: 6px; cursor: pointer;
-  border: 2px solid var(--line); background: transparent; display: grid; place-items: center;
+/* Round check: hollow ring, filled with a dot when done. */
+.item-check {
+  flex: none; width: 24px; height: 24px; margin-top: 12px; padding: 0; border-radius: 50%; cursor: pointer;
+  border: 1.5px solid var(--muted); background: transparent; display: grid; place-items: center;
+  transition: border-color 0.15s ease;
 }
-.item-box[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
-.item-box[aria-checked="true"]::after {
-  content: ""; width: 10px; height: 6px; margin-top: -3px;
-  border: solid var(--accent-ink); border-width: 0 0 2px 2px; transform: rotate(-45deg);
+.item-check[aria-checked="true"] { border-color: var(--accent); }
+.item-check[aria-checked="true"]::after {
+  content: ""; width: 16px; height: 16px; border-radius: 50%; background: var(--accent);
+  animation: check-pop 0.25s ease-out;
 }
+@keyframes check-pop { from { transform: scale(0.3); } 70% { transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .item-check[aria-checked="true"]::after { animation: none; } }
+.item-new .item-check { border-style: solid; opacity: 0.5; cursor: default; }
+
+/* Separator starts after the check, like iOS. */
+.item-body {
+  flex: 1; min-width: 0; padding: 0 14px 0 0; border-bottom: 0.5px solid var(--line);
+  display: flex; align-items: center; min-height: 48px;
+}
+.items > .item:last-child .item-body { border-bottom: 0; }
 
 .item-text {
-  flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 10px;
-  background: none; border: 0; padding: 0; text-align: left; cursor: text; overflow-wrap: anywhere;
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  background: none; border: 0; padding: 13px 0; text-align: left; cursor: text; font-size: 1.0625rem;
 }
-.item-text span:first-child { flex: 1; }
-.item-done .item-text span:first-child { text-decoration: line-through; color: var(--muted); }
-.item-qty { flex: none; font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.item-title { overflow-wrap: anywhere; }
+.item-note { font-size: 0.875rem; color: var(--muted); }
+.item-done .item-title { color: var(--muted); transition: color 0.2s ease; }
 
-.item-edit { flex: 1; min-width: 0; display: flex; gap: 6px; padding: 4px 0; }
-.item-edit-text { flex: 1; min-width: 0; }
-.item-edit-qty { width: 80px; flex: none; }
-
-.item-remove {
-  flex: none; width: 36px; height: 36px; border-radius: 10px; border: 0; background: none;
-  color: var(--muted); font-size: 1.3rem; cursor: pointer;
+.item-edit { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+.item-input {
+  flex: 1; min-width: 0; border: 0; outline: none; background: transparent;
+  font-size: 1.0625rem; padding: 13px 0;
 }
-.item-remove:hover { background: var(--live-soft); color: var(--live); }
-
-.done-divider {
-  display: flex; align-items: center; gap: 10px; margin-top: 18px;
-  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+.item-delete {
+  flex: none; border: 0; background: none; color: var(--live); font-weight: 600; cursor: pointer; padding: 8px 0;
 }
-.done-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
 /* Someone else just changed this item. */
 .item-flash { animation: item-flash 1.5s ease-out; }
 @keyframes item-flash { from { background: var(--accent-soft); } to { background: transparent; } }
-@media (prefers-reduced-motion: reduce) { .item-flash { animation: none; background: var(--accent-soft); } }
+@media (prefers-reduced-motion: reduce) { .item-flash { animation: none; } }
+
+/* "N Completed · Show" */
+.completed-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 4px 8px; font-size: 0.875rem; color: var(--muted);
+}
+.completed-header button { border: 0; background: none; color: var(--accent); font-size: 0.875rem; cursor: pointer; padding: 4px 0; }

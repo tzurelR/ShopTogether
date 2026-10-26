@@ -1,43 +1,95 @@
-/* Same palette and type as blueprint.html. Light by default, dark follows the OS. */
+/*
+ * Theme tokens. Light is the default; dark applies when the OS is dark (unless the person
+ * picked Light) or when they picked Dark. The picker sets <html data-theme="light|dark">.
+ */
 :root {
-  --bg: #f5f7f4;
+  --bg: #f2f2f7;
+  --bg-elevated: #ffffff;
   --surface: #ffffff;
-  --sunk: #e9eee8;
-  --fg: #18211b;
-  --muted: #5b6a60;
-  --line: #d3dcd4;
-  --accent: #1f7a4d;
+  --sunk: #e9e9ee;
+  --fg: #0b0b0c;
+  --muted: #8a8a8e;
+  --line: rgba(60, 60, 67, 0.16);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.12);
+
+  --brand: #1f8a52;
+  --accent: var(--brand);
   --accent-ink: #ffffff;
-  --accent-soft: #dcefe3;
-  --live: #d4462f;
-  --live-soft: #fbe3de;
-  --amber: #9a6a00;
-  --amber-soft: #fbefd2;
+  --accent-soft: color-mix(in srgb, var(--accent) 13%, transparent);
+  --live: #ff3b30;
+  --live-soft: rgba(255, 59, 48, 0.12);
+  --amber: #b25000;
+  --amber-soft: rgba(255, 149, 0, 0.16);
 
-  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  /* List colors (iOS system colors), one per list. */
+  --c-green: #34c759;
+  --c-blue: #007aff;
+  --c-orange: #ff9500;
+  --c-red: #ff3b30;
+  --c-purple: #af52de;
+  --c-pink: #ff2d55;
+  --c-teal: #30b0c7;
+  --c-indigo: #5856d6;
 
-  --radius: 12px;
+  --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+
+  --radius: 14px;
   --radius-sm: 10px;
-  --column: 560px;
+  --column: 640px;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111613;
-    --surface: #19201b;
-    --sunk: #0c100d;
-    --fg: #e4ebe5;
-    --muted: #98a89d;
-    --line: #2c3730;
-    --accent: #4cc285;
-    --accent-ink: #08130c;
-    --accent-soft: #173525;
-    --live: #ff7a62;
-    --live-soft: #3a1c16;
-    --amber: #e8b54a;
-    --amber-soft: #352a10;
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --bg-elevated: #1c1c1e;
+    --surface: #1c1c1e;
+    --sunk: #2c2c2e;
+    --fg: #f5f5f7;
+    --muted: #8d8d93;
+    --line: rgba(84, 84, 88, 0.55);
+    --shadow: none;
+    --brand: #30d158;
+    --accent-ink: #ffffff;
+    --live: #ff453a;
+    --live-soft: rgba(255, 69, 58, 0.18);
+    --amber: #ff9f0a;
+    --amber-soft: rgba(255, 159, 10, 0.18);
+    --c-green: #30d158;
+    --c-blue: #0a84ff;
+    --c-orange: #ff9f0a;
+    --c-red: #ff453a;
+    --c-purple: #bf5af2;
+    --c-pink: #ff375f;
+    --c-teal: #40c8e0;
+    --c-indigo: #5e5ce6;
     color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #000000;
+  --bg-elevated: #1c1c1e;
+  --surface: #1c1c1e;
+  --sunk: #2c2c2e;
+  --fg: #f5f5f7;
+  --muted: #8d8d93;
+  --line: rgba(84, 84, 88, 0.55);
+  --shadow: none;
+  --brand: #30d158;
+  --accent-ink: #ffffff;
+  --live: #ff453a;
+  --live-soft: rgba(255, 69, 58, 0.18);
+  --amber: #ff9f0a;
+  --amber-soft: rgba(255, 159, 10, 0.18);
+  --c-green: #30d158;
+  --c-blue: #0a84ff;
+  --c-orange: #ff9f0a;
+  --c-red: #ff453a;
+  --c-purple: #bf5af2;
+  --c-pink: #ff375f;
+  --c-teal: #40c8e0;
+  --c-indigo: #5e5ce6;
+  color-scheme: dark;
 }

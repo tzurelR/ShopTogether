@@ -16,6 +16,7 @@ export const config = {
   region: import.meta.env.VITE_REGION,
   userPoolId: import.meta.env.VITE_USER_POOL_ID,
   userPoolClientId: import.meta.env.VITE_USER_POOL_CLIENT_ID,
-  apiUrl: import.meta.env.VITE_API_URL.replace(/\/$/, ""),
+  // Dev: the Vite proxy (vite.config.js) forwards /api to VITE_API_URL. Build: call it directly.
+  apiUrl: import.meta.env.DEV ? "/api" : import.meta.env.VITE_API_URL.replace(/\/$/, ""),
   websocketUrl: import.meta.env.VITE_WEBSOCKET_URL,
 };

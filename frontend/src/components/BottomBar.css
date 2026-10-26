@@ -1,0 +1,19 @@
+.toolbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--line);
+  padding: 8px max(16px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.toolbar-inner {
+  max-width: var(--column); margin: 0 auto; display: flex; align-items: center; justify-content: space-between;
+}
+.toolbar-button {
+  display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; cursor: pointer;
+  color: var(--accent); font-size: 1.0625rem; font-weight: 600; padding: 6px 0;
+}
+.toolbar-plus {
+  width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+  display: grid; place-items: center; font-size: 1.15rem; line-height: 1; font-weight: 600;
+}
+main.page:has(.toolbar) { padding-bottom: 96px; }

@@ -7,6 +7,7 @@ import { safeNext } from "../auth/safeNext.js";
 import { useAuth } from "../auth/useAuth.js";
 import Alert from "../components/Alert.jsx";
 import AuthLayout from "../components/AuthLayout.jsx";
+import PasswordField from "../components/PasswordField.jsx";
 import TextField from "../components/TextField.jsx";
 
 export default function LoginPage() {
@@ -67,10 +68,9 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <TextField
+        <PasswordField
           id="password"
           label="Password"
-          type="password"
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -80,7 +80,7 @@ export default function LoginPage() {
         <button className="btn" type="submit" disabled={busy}>
           {busy ? "Logging in…" : "Log in"}
         </button>
-        <Link className="small center" to={`/forgot?email=${encodeURIComponent(email.trim())}`}>
+        <Link className="small center auth-link" to={`/forgot?email=${encodeURIComponent(email.trim())}`}>
           Forgot password?
         </Link>
       </form>

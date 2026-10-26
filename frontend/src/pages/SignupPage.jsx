@@ -5,6 +5,7 @@ import { signUp } from "../auth/cognito/signUp.js";
 import { errorMessage } from "../auth/errorMessage.js";
 import Alert from "../components/Alert.jsx";
 import AuthLayout from "../components/AuthLayout.jsx";
+import PasswordField from "../components/PasswordField.jsx";
 import TextField from "../components/TextField.jsx";
 
 export default function SignupPage() {
@@ -53,10 +54,9 @@ export default function SignupPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <TextField
+        <PasswordField
           id="password"
           label="Password"
-          type="password"
           autoComplete="new-password"
           minLength={8}
           hint="At least 8 characters, with an upper-case letter, a lower-case letter and a number."

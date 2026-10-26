@@ -1,47 +1,55 @@
 import { Link } from "react-router-dom";
 
+import { listColor } from "../lib/listColor.js";
 import "./ListCard.css";
 
-function sharingLabel(list) {
-  if (list.memberCount <= 1) return null;
-  const others = list.memberCount - 1;
-  return `Shared with ${others} ${others === 1 ? "person" : "people"}`;
+function ListIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <g fill="currentColor">
+        <circle cx="5" cy="6.5" r="1.6" />
+        <circle cx="5" cy="12" r="1.6" />
+        <circle cx="5" cy="17.5" r="1.6" />
+        <rect x="9" y="5.5" width="11" height="2" rx="1" />
+        <rect x="9" y="11" width="11" height="2" rx="1" />
+        <rect x="9" y="16.5" width="11" height="2" rx="1" />
+      </g>
+    </svg>
+  );
 }
 
-// One list on "My lists": name, progress, sharing, and a ⋯ menu.
+// One row on "My Lists": icon, name (+ who it's shared with), open-item count, ⋯ menu.
 export default function ListCard({ list, onRename, onDelete }) {
-  const percent = list.itemCount ? Math.round((list.doneCount / list.itemCount) * 100) : 0;
-  const shared = sharingLabel(list);
+  const left = Math.max(list.itemCount - list.doneCount, 0);
+  const others = list.memberCount - 1;
+
+  function pick(event, action) {
+    event.currentTarget.closest("details").open = false;
+    action(list);
+  }
 
   return (
-    <article className="list-card card">
-      <Link to={`/lists/${list.id}`} className="list-card-link">
-        <div className="list-card-top">
-          <b className="list-card-name">{list.name}</b>
-          {shared ? null : <span className="tag">Only you</span>}
-        </div>
-        <span className="small muted">
-          {list.doneCount} of {list.itemCount} done
-          {shared && ` · ${shared}`}
+    <li className="list-row" style={{ "--row-color": listColor(list.id) }}>
+      <Link to={`/lists/${list.id}`} className="list-row-link">
+        <span className="list-row-icon"><ListIcon /></span>
+        <span className="list-row-text">
+          <span className="list-row-name">{list.name}</span>
+          {others > 0 && (
+            <span className="list-row-sub">Shared with {others} {others === 1 ? "person" : "people"}</span>
+          )}
         </span>
-        <div className="bar" aria-hidden="true">
-          <i style={{ width: `${percent}%` }} />
-        </div>
+        <span className="list-row-count" aria-label={`${left} items left`}>{left}</span>
       </Link>
 
-      <details className="list-card-menu">
+      <details className="list-row-menu">
         <summary aria-label={`Options for ${list.name}`}>⋯</summary>
-        <div className="list-card-menu-items card">
-          <button type="button" onClick={(e) => { e.currentTarget.closest("details").open = false; onRename(list); }}>
-            Rename
-          </button>
+        <div className="list-row-menu-items">
+          <button type="button" onClick={(e) => pick(e, onRename)}>Rename</button>
           {list.role === "owner" && (
-            <button type="button" className="danger" onClick={(e) => { e.currentTarget.closest("details").open = false; onDelete(list); }}>
-              Delete
-            </button>
+            <button type="button" className="danger" onClick={(e) => pick(e, onDelete)}>Delete</button>
           )}
         </div>
       </details>
-    </article>
+    </li>
   );
 }

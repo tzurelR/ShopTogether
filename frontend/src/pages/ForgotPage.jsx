@@ -6,6 +6,7 @@ import { forgotPassword } from "../auth/cognito/forgotPassword.js";
 import { errorMessage } from "../auth/errorMessage.js";
 import Alert from "../components/Alert.jsx";
 import AuthLayout from "../components/AuthLayout.jsx";
+import PasswordField from "../components/PasswordField.jsx";
 import TextField from "../components/TextField.jsx";
 
 // Two steps on one page: ask for the code, then set the new password with it.
@@ -69,10 +70,9 @@ export default function ForgotPage() {
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
             required
           />
-          <TextField
+          <PasswordField
             id="new-password"
             label="New password"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             hint="At least 8 characters, with an upper-case letter, a lower-case letter and a number."

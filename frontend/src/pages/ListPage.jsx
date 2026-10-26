@@ -7,15 +7,17 @@ import { deleteItem } from "../api/deleteItem.js";
 import { getList } from "../api/getList.js";
 import { updateItem } from "../api/updateItem.js";
 import { useAuth } from "../auth/useAuth.js";
-import AddItemForm from "../components/AddItemForm.jsx";
 import Alert from "../components/Alert.jsx";
 import AppBar from "../components/AppBar.jsx";
+import BottomBar from "../components/BottomBar.jsx";
 import ItemRow from "../components/ItemRow.jsx";
 import LivePill from "../components/LivePill.jsx";
+import NewItemRow from "../components/NewItemRow.jsx";
 import ShareSheet from "../components/ShareSheet.jsx";
 import Sheet from "../components/Sheet.jsx";
 import Toast from "../components/Toast.jsx";
 import { displayName } from "../lib/displayName.js";
+import { listColor } from "../lib/listColor.js";
 import { describeEvent } from "../realtime/describeEvent.js";
 import { useListSocket } from "../realtime/useListSocket.js";
 
@@ -30,6 +32,8 @@ function byOrder(a, b) {
 let tempCounter = 0;
 
 const FLASH_MS = 1500;
+// A checked item stays in place this long before it moves to Completed (like Reminders).
+const LINGER_MS = 1200;
 
 export default function ListPage() {
   const { id: listId } = useParams();
@@ -40,6 +44,9 @@ export default function ListPage() {
   const [members, setMembers] = useState([]);
   const [invites, setInvites] = useState([]);
   const [sharing, setSharing] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [lingering, setLingering] = useState({}); // itemId -> true right after you check it
   const [flashing, setFlashing] = useState({}); // itemId -> true while highlighted
   const [toast, setToast] = useState("");
   const itemsRef = useRef(items);
@@ -194,10 +201,18 @@ export default function ListPage() {
     }
   }
 
+  function toggle(item) {
+    if (!item.done) {
+      setLingering((current) => ({ ...current, [item.id]: true }));
+      setTimeout(() => setLingering(({ [item.id]: _, ...rest }) => rest), LINGER_MS);
+    }
+    changeItem(item, { done: !item.done });
+  }
+
   if (status === "missing") {
     return (
       <main className="page">
-        <AppBar title="List" back="/" />
+        <AppBar title="List" back="/" backLabel="Lists" />
         <div className="card stack center">
           <p><b>List not found.</b></p>
           <p className="muted small">It may have been deleted, or you're no longer a member.</p>
@@ -207,16 +222,23 @@ export default function ListPage() {
     );
   }
 
-  const open = items.filter((i) => !i.done).sort(byOrder);
-  const done = items.filter((i) => i.done).sort(byOrder);
-  const rowProps = { onToggle: (i) => changeItem(i, { done: !i.done }), onEdit: changeItem, onDelete: removeItem };
+  const open = items.filter((i) => !i.done || lingering[i.id]).sort(byOrder);
+  const done = items.filter((i) => i.done && !lingering[i.id]).sort(byOrder);
+  const rowProps = { onToggle: toggle, onEdit: changeItem, onDelete: removeItem };
 
+  const left = items.filter((i) => !i.done).length;
   return (
-    <main className="page">
-      <AppBar title={list?.name ?? "List"} back="/">
+    // The list's color tints the title, checks and buttons, like Reminders.
+    <main className="page" style={{ "--accent": listColor(listId) }}>
+      <AppBar
+        title={list?.name ?? ""}
+        subtitle={status === "ready" ? (left ? `${left} ${left === 1 ? "item" : "items"} left` : "All done") : null}
+        back="/"
+        backLabel="Lists"
+      >
         {status === "ready" && <LivePill status={liveStatus} present={present} mySub={user?.sub} />}
         {status === "ready" && (
-          <button className="btn btn-ghost share-button" type="button" onClick={() => setSharing(true)}>
+          <button className="nav-button" type="button" onClick={() => setSharing(true)}>
             Share
           </button>
         )}
@@ -238,20 +260,46 @@ export default function ListPage() {
 
       {status === "ready" && (
         <>
-          {items.length === 0 && <p className="muted small">No items yet. Add the first one below.</p>}
-          <ul className="items">
-            {open.map((item) => <ItemRow key={item.id} item={item} flash={!!flashing[item.id]} {...rowProps} />)}
-          </ul>
+          {open.length === 0 && !adding && (
+            <div className="empty">
+              <div className="empty-icon" aria-hidden="true">{done.length ? "✓" : "+"}</div>
+              <p className="empty-title">{done.length ? "All done" : "Nothing on this list yet"}</p>
+              <p className="muted">{done.length ? "Everything is checked off." : "Tap New Item to add the first thing."}</p>
+            </div>
+          )}
+          {(open.length > 0 || adding) && (
+            <ul className="items">
+              {open.map((item) => <ItemRow key={item.id} item={item} flash={!!flashing[item.id]} {...rowProps} />)}
+              {adding && <NewItemRow onAdd={addItem} onClose={() => setAdding(false)} />}
+            </ul>
+          )}
+
           {done.length > 0 && (
             <>
-              <div className="done-divider">Done · {done.length}</div>
-              <ul className="items">
-                {done.map((item) => <ItemRow key={item.id} item={item} flash={!!flashing[item.id]} {...rowProps} />)}
-              </ul>
+              <div className="completed-header">
+                <span>{done.length} Completed</span>
+                <button type="button" onClick={() => setShowCompleted((v) => !v)}>
+                  {showCompleted ? "Hide" : "Show"}
+                </button>
+              </div>
+              {showCompleted && (
+                <ul className="items">
+                  {done.map((item) => <ItemRow key={item.id} item={item} flash={!!flashing[item.id]} {...rowProps} />)}
+                </ul>
+              )}
             </>
           )}
-          <div className="spacer" />
-          <AddItemForm onAdd={addItem} />
+
+          {/* Tapping the empty space under the list starts a new item, like Reminders. */}
+          <button type="button" className="tap-to-add" aria-hidden="true" tabIndex={-1} onClick={() => setAdding(true)} />
+
+          <BottomBar
+            left={
+              <button className="toolbar-button" type="button" onClick={() => setAdding(true)}>
+                <span className="toolbar-plus" aria-hidden="true">+</span> New Item
+              </button>
+            }
+          />
         </>
       )}
       <Toast message={toast} onDone={clearToast} />

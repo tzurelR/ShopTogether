@@ -6,7 +6,7 @@
   },
   "context": {
     "stage": "dev",
-    "appUrl": "http://localhost:5173",
+    "appUrl": "https://d3tmlil1c87zn8.cloudfront.net",
     "senderEmail": "",
     "hosting": true,
     "@aws-cdk/aws-apigateway:disableCloudWatchRole": true,

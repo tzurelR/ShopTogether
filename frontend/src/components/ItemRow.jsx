@@ -2,110 +2,93 @@ import { useEffect, useRef, useState } from "react";
 
 import "./ItemRow.css";
 
-// One item: checkbox, text (tap to edit: Enter saves, Escape cancels), qty, remove.
+// One item, Reminders-style: round check, title (tap to edit: Return saves, Esc cancels), qty as a note.
 export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelete }) {
   const pending = item.id.startsWith("tmp-");
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(item.text);
-  const [qty, setQty] = useState(item.qty || "");
-  const textRef = useRef(null);
-  // Enter, Escape and blur can all fire as the editor closes; only the first one counts.
+  const inputRef = useRef(null);
+  // Return, Esc and blur can all fire as the editor closes; only the first one counts.
   const finished = useRef(false);
 
   useEffect(() => {
-    if (editing) textRef.current?.focus();
+    if (editing) inputRef.current?.focus();
   }, [editing]);
 
   function startEditing() {
     if (pending) return;
     setText(item.text);
-    setQty(item.qty || "");
     finished.current = false;
     setEditing(true);
   }
 
-  function cancel() {
+  function finish(save) {
     if (finished.current) return;
     finished.current = true;
     setEditing(false);
-  }
-
-  function save() {
-    if (finished.current) return;
-    finished.current = true;
-    setEditing(false);
-    const changes = {};
-    if (text.trim() && text.trim() !== item.text) changes.text = text.trim();
-    if (qty.trim() !== (item.qty || "")) changes.qty = qty.trim();
-    if (Object.keys(changes).length) onEdit(item, changes);
+    if (save && text.trim() && text.trim() !== item.text) onEdit(item, { text: text.trim() });
   }
 
   function onKeyDown(event) {
     if (event.key === "Enter") {
       event.preventDefault();
-      save();
+      finish(true);
     } else if (event.key === "Escape") {
       event.preventDefault();
-      cancel();
+      finish(false);
     }
   }
 
-  // Leaving both fields saves; moving focus between them doesn't.
+  // Leaving the row saves; moving focus to its Delete button doesn't.
   function onBlur(event) {
-    if (!event.currentTarget.contains(event.relatedTarget)) save();
+    if (!event.currentTarget.contains(event.relatedTarget)) finish(true);
   }
 
+  const classes = ["item", item.done && "item-done", pending && "item-pending", flash && "item-flash"];
   return (
-    <li className={`item${item.done ? " item-done" : ""}${pending ? " item-pending" : ""}${flash ? " item-flash" : ""}`}>
+    <li className={classes.filter(Boolean).join(" ")}>
       <button
         type="button"
         role="checkbox"
         aria-checked={item.done}
         aria-label={item.done ? `Uncheck ${item.text}` : `Check off ${item.text}`}
-        className="item-box"
+        className="item-check"
         onClick={() => onToggle(item)}
         disabled={pending}
       />
 
-      {editing ? (
-        <div className="item-edit" onBlur={onBlur}>
-          <input
-            ref={textRef}
-            className="input item-edit-text"
-            aria-label="Item"
-            value={text}
-            maxLength={200}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={onKeyDown}
-          />
-          <input
-            className="input item-edit-qty"
-            aria-label="Quantity"
-            placeholder="Qty"
-            value={qty}
-            maxLength={20}
-            onChange={(e) => setQty(e.target.value)}
-            onKeyDown={onKeyDown}
-          />
-        </div>
-      ) : (
-        <button type="button" className="item-text" onClick={startEditing} disabled={pending}>
-          <span>{item.text}</span>
-          {item.qty && <span className="item-qty">{item.qty}</span>}
-        </button>
-      )}
-
-      {!editing && (
-        <button
-          type="button"
-          className="item-remove"
-          aria-label={`Remove ${item.text}`}
-          onClick={() => onDelete(item)}
-          disabled={pending}
-        >
-          ×
-        </button>
-      )}
+      <div className="item-body" onBlur={editing ? onBlur : undefined}>
+        {editing ? (
+          <div className="item-edit">
+            <input
+              ref={inputRef}
+              className="item-input"
+              aria-label="Item"
+              value={text}
+              maxLength={200}
+              enterKeyHint="done"
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={onKeyDown}
+            />
+            <button
+              type="button"
+              className="item-delete"
+              onClick={() => {
+                finished.current = true;
+                setEditing(false);
+                onDelete(item);
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="item-text" onClick={startEditing} disabled={pending}>
+            <span className="item-title">{item.text}</span>
+            {item.qty && <span className="item-note">{item.qty}</span>}
+          </button>
+        )}
+      </div>
     </li>
   );
 }

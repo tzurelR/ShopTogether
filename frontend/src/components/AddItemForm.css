@@ -1,6 +1,0 @@
-.add-item {
-  position: sticky; bottom: 0; display: flex; gap: 6px;
-  padding: 10px 0 max(10px, env(safe-area-inset-bottom)); background: var(--bg);
-}
-.add-item-text { flex: 1; min-width: 0; }
-.add-item-qty { width: 72px; flex: none; }

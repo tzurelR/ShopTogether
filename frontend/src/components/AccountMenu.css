@@ -1,13 +1,22 @@
 .account { position: relative; }
 .account-avatar {
-  list-style: none; cursor: pointer; width: 36px; height: 36px; border-radius: 50%;
-  display: grid; place-items: center; font-weight: 600;
-  background: var(--accent-soft); color: var(--accent);
+  list-style: none; cursor: pointer; width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 600; font-size: 0.95rem;
+  background: linear-gradient(135deg, var(--c-teal), var(--brand)); color: #fff;
 }
 .account-avatar::-webkit-details-marker { display: none; }
+.account-avatar-lg { width: 40px; height: 40px; cursor: default; flex: none; }
 .account-menu {
-  position: absolute; right: 0; top: 44px; z-index: 10; width: max-content; max-width: 80vw;
-  display: flex; flex-direction: column; gap: 10px;
-  box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.4);
+  position: absolute; right: 0; top: 44px; z-index: 30; width: 280px; max-width: calc(100vw - 32px);
+  display: flex; flex-direction: column; gap: 14px; padding: 14px;
+  background: var(--bg-elevated); border-radius: 16px;
+  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.35), 0 0 0 0.5px var(--line);
 }
-.account-email { overflow-wrap: anywhere; }
+.account-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.account-email { font-weight: 600; overflow-wrap: anywhere; }
+.account-section { display: flex; flex-direction: column; gap: 6px; }
+.account-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.account-logout {
+  border: 0; border-top: 0.5px solid var(--line); background: none; color: var(--live);
+  font-size: 1rem; text-align: left; padding: 12px 0 2px; cursor: pointer;
+}

@@ -1,7 +1,12 @@
 .toast {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 20;
+  bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 40;
   max-width: min(calc(100% - 32px), 480px);
-  padding: 10px 14px; border-radius: 10px; font-size: 0.88rem;
-  background: var(--fg); color: var(--bg); box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.5);
+  padding: 10px 16px; border-radius: 999px; font-size: 0.9375rem; font-weight: 500;
+  background: color-mix(in srgb, var(--fg) 88%, transparent); color: var(--bg);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.45);
+  animation: toast-in 0.25s ease-out;
 }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
