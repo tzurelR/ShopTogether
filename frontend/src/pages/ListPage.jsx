@@ -12,6 +12,8 @@ import Alert from "../components/Alert.jsx";
 import AppBar from "../components/AppBar.jsx";
 import ItemRow from "../components/ItemRow.jsx";
 import LivePill from "../components/LivePill.jsx";
+import ShareSheet from "../components/ShareSheet.jsx";
+import Sheet from "../components/Sheet.jsx";
 import Toast from "../components/Toast.jsx";
 import { displayName } from "../lib/displayName.js";
 import { describeEvent } from "../realtime/describeEvent.js";
@@ -36,6 +38,8 @@ export default function ListPage() {
   const [list, setList] = useState(null);
   const [items, setItems] = useState([]);
   const [members, setMembers] = useState([]);
+  const [invites, setInvites] = useState([]);
+  const [sharing, setSharing] = useState(false);
   const [flashing, setFlashing] = useState({}); // itemId -> true while highlighted
   const [toast, setToast] = useState("");
   const itemsRef = useRef(items);
@@ -50,6 +54,7 @@ export default function ListPage() {
       setList(data.list);
       setItems(data.items);
       setMembers(data.members);
+      setInvites(data.invites);
       setStatus("ready");
     } catch (err) {
       setStatus(err instanceof ApiError && err.status === 404 ? "missing" : "failed");
@@ -115,6 +120,7 @@ export default function ListPage() {
         break;
       case "member.joined":
         setMembers((current) => [...current.filter((m) => m.sub !== event.member.sub), event.member]);
+        setInvites((current) => current.filter((i) => i.email !== event.member.email));
         break;
       case "member.removed":
         setMembers((current) => current.filter((m) => m.sub !== event.member.sub));
@@ -209,6 +215,11 @@ export default function ListPage() {
     <main className="page">
       <AppBar title={list?.name ?? "List"} back="/">
         {status === "ready" && <LivePill status={liveStatus} present={present} mySub={user?.sub} />}
+        {status === "ready" && (
+          <button className="btn btn-ghost share-button" type="button" onClick={() => setSharing(true)}>
+            Share
+          </button>
+        )}
       </AppBar>
 
       {error && (
@@ -244,6 +255,21 @@ export default function ListPage() {
         </>
       )}
       <Toast message={toast} onDone={clearToast} />
+
+      <Sheet open={sharing && !!list} title="Share list" onClose={() => setSharing(false)}>
+        {list && (
+          <ShareSheet
+            list={list}
+            members={members}
+            invites={invites}
+            mySub={user?.sub}
+            onInvited={(invite) => setInvites((current) => [...current.filter((i) => i.email !== invite.email), invite])}
+            onInviteCancelled={(email) => setInvites((current) => current.filter((i) => i.email !== email))}
+            onMemberRemoved={(sub) => setMembers((current) => current.filter((m) => m.sub !== sub))}
+            onLeft={() => navigate("/", { replace: true, state: { message: `You left “${list.name}”.` } })}
+          />
+        )}
+      </Sheet>
     </main>
   );
 }

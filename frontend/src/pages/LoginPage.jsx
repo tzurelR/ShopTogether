@@ -53,7 +53,10 @@ export default function LoginPage() {
         </>
       }
     >
-      <Alert kind="info">{location.state?.message}</Alert>
+      <Alert kind="info">
+        {location.state?.message ||
+          (next.startsWith("/invite/") ? "Someone shared a list with you. Log in, or create an account, to open it." : "")}
+      </Alert>
       <form className="stack" onSubmit={onSubmit}>
         <TextField
           id="email"
