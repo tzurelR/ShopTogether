@@ -1,11 +1,13 @@
-"""REST entry point for the HTTP API. Placeholder until ST-7 adds the router."""
+"""Lambda entry point for every REST route of the HTTP API."""
 
-import json
+import logging
+
+from api.router import dispatch
+from routes import ROUTES
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 def handler(event, context):
-    return {
-        "statusCode": 501,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps({"error": {"code": "not_implemented", "message": f"{event.get('routeKey')} is not built yet"}}),
-    }
+    request_id = getattr(context, "aws_request_id", "local")
+    return dispatch(event, request_id, ROUTES)
