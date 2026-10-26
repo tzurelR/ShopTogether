@@ -401,7 +401,7 @@ flowchart LR
   H["HTTP API (JWT authorizer)"]
   W["WebSocket API"]
   LA["api Lambda (all REST routes)"]
-  LW["ws Lambda (connect, disconnect, subscribe)"]
+  LW["websocket Lambda (connect, disconnect, subscribe)"]
   D[("DynamoDB: one table")]
   S["SES (invite email, step 5)"]
   F["S3 + CloudFront (hosting, step 5)"]
@@ -421,7 +421,7 @@ flowchart LR
     <div class="grid2">
       <div class="svc"><span class="k">Auth</span><h3>Cognito user pool (Lite)</h3><p>Email and password with email verification. The app client has no secret, so the browser calls Cognito directly with <code>fetch</code>. No Amplify.</p><span class="why">First 10,000 monthly active users are free.</span></div>
       <div class="svc"><span class="k">REST</span><h3>API Gateway HTTP API</h3><p>Its built-in JWT authorizer checks Cognito tokens, so we don't write or pay for an authorizer Lambda.</p><span class="why">About a third of the price of a REST API.</span></div>
-      <div class="svc"><span class="k">Compute</span><h3>2 Lambda functions</h3><p><code>api</code> handles every REST route with a small router. <code>ws</code> handles the socket events. Both use only boto3, so there is nothing to package.</p><span class="why">arm64 and 256 MB. Fewer functions also means fewer cold starts.</span></div>
+      <div class="svc"><span class="k">Compute</span><h3>2 Lambda functions</h3><p><code>api</code> handles every REST route with a small router. <code>websocket</code> handles the socket events. Both use only boto3, so there is nothing to package.</p><span class="why">arm64 and 256 MB. Fewer functions also means fewer cold starts.</span></div>
       <div class="svc"><span class="k">Data</span><h3>DynamoDB, single table</h3><p>Lists, items, members, invites and socket connections share one table. Expired invites and connections are deleted for free by the table's TTL.</p><span class="why">On-demand billing. 25 GB of storage is always free.</span></div>
       <div class="svc"><span class="k">Live</span><h3>API Gateway WebSocket</h3><p>After each write, the <code>api</code> Lambda pushes the change straight to the people who have that list open. No streams and no extra Lambda.</p><span class="why">Costs cents at hobby scale. Compared with Pusher <a href="#realtime">below</a>.</span></div>
       <div class="svc"><span class="k">Later</span><h3>SES, S3 + CloudFront</h3><p>Invite emails and public hosting come in the last step. Until then, the invite link appears in the app to copy, and the frontend runs locally against the deployed API.</p><span class="why">SES costs $0.10 per 1,000 emails.</span></div>
@@ -465,7 +465,7 @@ sequenceDiagram
 sequenceDiagram
   actor D as Dana
   actor N as Noa
-  participant WS as WebSocket API + ws Lambda
+  participant WS as WebSocket API + websocket Lambda
   participant API as HTTP API + api Lambda
   participant DB as DynamoDB
   N->>WS: connect wss://...?token=access token
@@ -574,13 +574,13 @@ sequenceDiagram
       <table>
         <thead><tr><th>Setting</th><th>HTTP API</th><th>WebSocket API</th></tr></thead>
         <tbody>
-          <tr><td>Routes</td><td>13 routes (table above) → <code>api</code> Lambda, proxy integration (payload v2)</td><td><code>$connect</code>, <code>$disconnect</code>, <code>subscribe</code>, <code>unsubscribe</code>, <code>$default</code> → <code>ws</code> Lambda</td></tr>
+          <tr><td>Routes</td><td>13 routes (table above) → <code>api</code> Lambda, proxy integration (payload v2)</td><td><code>$connect</code>, <code>$disconnect</code>, <code>subscribe</code>, <code>unsubscribe</code>, <code>$default</code> → <code>websocket</code> Lambda</td></tr>
           <tr><td>Auth</td><td>Built-in JWT authorizer: issuer is the user pool URL, audience is the app client ID</td><td>Token in the <code>?token=</code> query string, checked in <code>$connect</code> with Cognito <code>GetUser</code>. Connection refused if the token is invalid.</td></tr>
           <tr><td>Stage</td><td><code>$default</code>, auto-deploy</td><td><code>dev</code>, auto-deploy</td></tr>
           <tr><td>CORS</td><td>Allow <code>http://localhost:5173</code> now, and the CloudFront domain in step 5. Methods GET, POST, PATCH, DELETE. Header <code>Authorization</code>, <code>Content-Type</code>.</td><td>Not applicable</td></tr>
           <tr><td>Throttling</td><td>Stage default: rate 20 req/s, burst 50. This caps the bill if something loops.</td><td>Same limits on the stage</td></tr>
           <tr><td>Logging</td><td>Off in dev. Lambda logs are enough and kept for 2 weeks.</td><td>Off in dev</td></tr>
-          <tr><td>Outputs</td><td><code>ApiUrl</code> → frontend <code>VITE_API_URL</code></td><td><code>WsUrl</code> → frontend <code>VITE_WS_URL</code>; callback URL → <code>api</code> Lambda env</td></tr>
+          <tr><td>Outputs</td><td><code>ApiUrl</code> → frontend <code>VITE_API_URL</code></td><td><code>WebsocketUrl</code> → frontend <code>VITE_WEBSOCKET_URL</code>; callback URL → <code>api</code> Lambda env</td></tr>
         </tbody>
       </table>
     </div>
@@ -686,7 +686,7 @@ sequenceDiagram
         <div class="step-body">
           <h3>Live updates</h3>
           <ul>
-            <li>WebSocket API and the <code>ws</code> Lambda (connect, disconnect, subscribe). The <code>api</code> Lambda pushes after each write.</li>
+            <li>WebSocket API and the <code>websocket</code> Lambda (connect, disconnect, subscribe). The <code>api</code> Lambda pushes after each write.</li>
             <li>Frontend: socket client with reconnect, highlight on remote changes, and the "who's here" pill</li>
           </ul>
           <div class="done"><b>Done when:</b> you open the same list in two browsers, and a change in one appears in the other within about a second.</div>
@@ -784,9 +784,9 @@ sequenceDiagram
       ac: ['Every route requires the authorizer. A request without a token gets 401 before Lambda runs.', 'CORS allows `http://localhost:5173`, methods GET, POST, PATCH, DELETE and OPTIONS, and headers `Authorization` and `Content-Type`', 'Stage throttling: rate 20, burst 50', 'The Lambda has read/write access to the table only, and gets `TABLE_NAME` in its environment', 'Output: `ApiUrl`'],
       deps: ['ST-2', 'ST-3'] },
     { key: 'ST-5', type: 'story', epic: 'cdk', step: 3, pri: 'high', pts: 3,
-      title: 'WebSocket API and ws Lambda',
-      desc: 'Add a WebSocket API with the `dev` stage. Routes `$connect`, `$disconnect`, `subscribe`, `unsubscribe` and `$default` all go to the `ws` Lambda.',
-      ac: ['The `ws` Lambda has table access and permission to call Cognito `GetUser`', 'The `api` and `ws` Lambdas both get `execute-api:ManageConnections` and a `WS_CALLBACK_URL` env var', 'Stage throttling matches the HTTP API', 'Output: `WsUrl`'],
+      title: 'WebSocket API and websocket Lambda',
+      desc: 'Add a WebSocket API with the `dev` stage. Routes `$connect`, `$disconnect`, `subscribe`, `unsubscribe` and `$default` all go to the `websocket` Lambda.',
+      ac: ['The `websocket` Lambda has table access and permission to call Cognito `GetUser`', 'The `api` and `websocket` Lambdas both get `execute-api:ManageConnections` and a `WEBSOCKET_CALLBACK_URL` env var', 'Stage throttling matches the HTTP API', 'Output: `WebsocketUrl`'],
       deps: ['ST-4'] },
     { key: 'ST-6', type: 'story', epic: 'cdk', step: 5, pri: 'low', pts: 5,
       title: 'Email and hosting: SES identity, S3 + CloudFront',
@@ -811,7 +811,7 @@ sequenceDiagram
       ac: ['Item ID is a ULID. `updatedBy` and `updatedAt` are set on every write.', 'Validation: text is 1 to 200 characters, qty is an optional string of up to 20 characters, done is a boolean, position is a number', 'Writes to META `updatedAt` so "My lists" can sort by recent activity', 'Editing an item that doesn’t exist returns 404 (conditional write)'],
       deps: ['ST-8'] },
     { key: 'ST-10', type: 'story', epic: 'be', step: 3, pri: 'high', pts: 5,
-      title: 'ws Lambda: connect, subscribe and disconnect',
+      title: 'websocket Lambda: connect, subscribe and disconnect',
       desc: 'On `$connect`, verify the access token from `?token=` with Cognito `GetUser` and save `CONN#id`. On `subscribe`, check that the user is a member of the list, then write `LIST#id / CONN#id`. On `$disconnect`, delete both rows.',
       ac: ['An invalid or expired token makes `$connect` return 401, and the socket is never opened', 'Subscribing to a list you don’t belong to returns an error message on the socket and saves nothing', 'Connection rows have a 2-hour TTL as a safety net', 'Subscribe and disconnect broadcast `presence.joined` and `presence.left` for the "Dana here" pill', '`$default` answers pings with `{"type":"pong"}`'],
       deps: ['ST-5', 'ST-8'] },
@@ -835,7 +835,7 @@ sequenceDiagram
     { key: 'ST-14', type: 'task', epic: 'fe', step: 1, pri: 'high', pts: 3,
       title: 'Frontend skeleton: Vite + React, routes and theme',
       desc: 'Create `frontend/` with Vite + React, pending your confirmation of the framework. Routes: `/login`, `/signup`, `/confirm`, `/forgot`, `/`, `/lists/:id`, `/invite/:token`.',
-      ac: ['Config comes from `.env.local` with `VITE_REGION`, `VITE_USER_POOL_CLIENT_ID`, `VITE_API_URL` and `VITE_WS_URL`', 'Colors and type follow the screens on this page, in light and dark themes', 'Layout is mobile-first and becomes a centered column on desktop', '`npm run build` produces static files only'],
+      ac: ['Config comes from `.env.local` with `VITE_REGION`, `VITE_USER_POOL_CLIENT_ID`, `VITE_API_URL` and `VITE_WEBSOCKET_URL`', 'Colors and type follow the screens on this page, in light and dark themes', 'Layout is mobile-first and becomes a centered column on desktop', '`npm run build` produces static files only'],
       deps: ['ST-2'] },
     { key: 'ST-15', type: 'story', epic: 'fe', step: 1, pri: 'high', pts: 5,
       title: 'Sign up, confirm, log in and session handling',

@@ -2,6 +2,7 @@
 
 from db.items.update_item import update_item
 from helpers.access import require_member
+from helpers.broadcast import broadcast
 from helpers.clock import now_iso
 from helpers.constants import UPDATE_ITEM_FIELDS
 from helpers.errors import NotFound
@@ -18,4 +19,6 @@ def updateitem(req: Request) -> dict:
     item = update_item(list_id, item_id, changes, req.user.sub, now_iso())
     if item is None:
         raise NotFound("Item not found. Someone may have deleted it.")
-    return ok({"item": item_view(item)})
+    view = item_view(item)
+    broadcast(list_id, {"type": "item.updated", "listId": list_id, "by": req.user.sub, "item": view})
+    return ok({"item": view})

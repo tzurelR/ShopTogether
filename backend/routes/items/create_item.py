@@ -2,6 +2,7 @@
 
 from db.items.create_item import create_item
 from helpers.access import list_not_found, require_member
+from helpers.broadcast import broadcast
 from helpers.clock import now_iso
 from helpers.constants import CREATE_ITEM_FIELDS
 from helpers.ids import new_id
@@ -17,4 +18,6 @@ def createitem(req: Request) -> dict:
     item = create_item(list_id, new_id(), body, req.user.sub, now_iso())
     if item is None:
         raise list_not_found()
-    return created({"item": item_view(item)})
+    view = item_view(item)
+    broadcast(list_id, {"type": "item.created", "listId": list_id, "by": req.user.sub, "item": view})
+    return created({"item": view})

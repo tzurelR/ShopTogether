@@ -119,6 +119,18 @@ def tx_delete(
     return {"Delete": _with_expressions(op, condition, names, values)}
 
 
+def tx_check(
+    key: dict,
+    condition: str,
+    *,
+    names: dict | None = None,
+    values: dict | None = None,
+) -> dict:
+    """Fail the transaction unless `condition` holds on `key`, without writing it."""
+    op: dict = {"TableName": table().name, "Key": _serialize(key)}
+    return {"ConditionCheck": _with_expressions(op, condition, names, values)}
+
+
 def transact_write(ops: list[dict]) -> None:
     if len(ops) > TRANSACT_LIMIT:
         raise ValueError(f"A transaction takes at most {TRANSACT_LIMIT} operations, got {len(ops)}.")

@@ -6,11 +6,11 @@ Region `eu-central-1`. Every stack is named `ShopTogether-<stage>-<Name>` and ta
 |---|---|---|
 | `ShopTogether-dev-Auth` | ST-2 | Cognito user pool (Lite, email + password) and the `web` app client |
 | `ShopTogether-dev-Data` | ST-3 | DynamoDB table `shoptogether-dev` (PK/SK, on-demand, TTL `expiresAt`) |
-| `ShopTogether-dev-Api` | ST-4, ST-5 | HTTP API + JWT authorizer → `api` Lambda; WebSocket API → `ws` Lambda |
+| `ShopTogether-dev-Api` | ST-4, ST-5 | HTTP API + JWT authorizer → `api` Lambda; WebSocket API → `websocket` Lambda |
 | `ShopTogether-dev-Email` | ST-6 | SES sender identity (only if `senderEmail` is set) |
 | `ShopTogether-dev-Hosting` | ST-6 | S3 + CloudFront for the frontend (only if `hosting` is true) |
 
-The Lambda code is the whole `../backend` folder. Handlers: `api.handler.handler` and `ws.handler.handler`.
+The Lambda code is the whole `../backend` folder. Handlers: `api.handler.handler` and `websocket.handler.handler`.
 
 ## Settings (`cdk.json` → `context`)
 
@@ -53,7 +53,14 @@ cdk deploy ShopTogether-dev-Email ShopTogether-dev-Hosting --outputs-file output
 cdk deploy ShopTogether-dev-Api --outputs-file outputs.json
 ```
 
-Outputs the frontend needs: `UserPoolId`, `UserPoolClientId`, `Region`, `ApiUrl`, `WsUrl` (and `SiteUrl`, `BucketName`, `DistributionId` for hosting).
+### SES sandbox
+
+A new SES account is in the **sandbox**: it can only send to addresses you've verified, max 200 emails a day.
+
+- Testing: verify each test recipient in the SES console (eu-central-1 → Identities → Create identity → Email).
+- Real users: SES console → Account dashboard → **Request production access** (use case: transactional invite emails). AWS usually answers within a day.
+
+Outputs the frontend needs: `UserPoolId`, `UserPoolClientId`, `Region`, `ApiUrl`, `WebsocketUrl` (and `SiteUrl`, `BucketName`, `DistributionId` for hosting).
 
 ## Remove everything
 

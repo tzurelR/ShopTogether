@@ -1,4 +1,4 @@
-"""ST-4 + ST-5: HTTP API (JWT authorizer -> api Lambda) and WebSocket API (-> ws Lambda)."""
+"""ST-4 + ST-5: HTTP API (JWT authorizer -> api Lambda) and WebSocket API (-> websocket Lambda)."""
 
 from aws_cdk import CfnOutput, Duration, Stack
 from aws_cdk import aws_apigatewayv2 as apigw
@@ -31,7 +31,7 @@ HTTP_ROUTES: list[tuple[apigw.HttpMethod, str]] = [
     (apigw.HttpMethod.DELETE, "/lists/{listId}/members/{sub}"),
 ]
 
-WS_ROUTES = ["subscribe", "unsubscribe"]
+WEBSOCKET_ROUTES = ["subscribe", "unsubscribe"]
 
 
 class ApiStack(Stack):
@@ -62,16 +62,16 @@ class ApiStack(Stack):
             description="ShopTogether REST routes",
             environment={"TABLE_NAME": table.table_name, "APP_URL": config.app_url, **cognito_env},
         )
-        ws_fn = python_function(
+        websocket_fn = python_function(
             self,
-            "WsFunction",
+            "WebsocketFunction",
             config=config,
-            handler="ws.handler.handler",
+            handler="websocket.handler.handler",
             description="ShopTogether WebSocket connect/disconnect/subscribe",
             environment={"TABLE_NAME": table.table_name, **cognito_env},
         )
         table.grant_read_write_data(api_fn)
-        table.grant_read_write_data(ws_fn)
+        table.grant_read_write_data(websocket_fn)
 
         if config.sender_email:
             api_fn.add_environment("SENDER_EMAIL", config.sender_email)
@@ -118,32 +118,32 @@ class ApiStack(Stack):
             http_api.add_routes(path=path, methods=[method], integration=api_integration)
 
         # ---------- WebSocket API ----------
-        ws_integration = integrations.WebSocketLambdaIntegration("WsIntegration", ws_fn)
-        ws_api = apigw.WebSocketApi(
+        websocket_integration = integrations.WebSocketLambdaIntegration("WebsocketIntegration", websocket_fn)
+        websocket_api = apigw.WebSocketApi(
             self,
-            "WsApi",
-            api_name=f"shoptogether-{config.stage}-ws",
+            "WebsocketApi",
+            api_name=f"shoptogether-{config.stage}-websocket",
             route_selection_expression="$request.body.action",
-            connect_route_options=apigw.WebSocketRouteOptions(integration=ws_integration),
-            disconnect_route_options=apigw.WebSocketRouteOptions(integration=ws_integration),
-            default_route_options=apigw.WebSocketRouteOptions(integration=ws_integration),
+            connect_route_options=apigw.WebSocketRouteOptions(integration=websocket_integration),
+            disconnect_route_options=apigw.WebSocketRouteOptions(integration=websocket_integration),
+            default_route_options=apigw.WebSocketRouteOptions(integration=websocket_integration),
         )
-        for route in WS_ROUTES:
-            ws_api.add_route(route, integration=ws_integration)
+        for route in WEBSOCKET_ROUTES:
+            websocket_api.add_route(route, integration=websocket_integration)
 
-        ws_stage = apigw.WebSocketStage(
+        websocket_stage = apigw.WebSocketStage(
             self,
-            "WsStage",
-            web_socket_api=ws_api,
+            "WebsocketStage",
+            web_socket_api=websocket_api,
             stage_name=config.stage,
             auto_deploy=True,
             throttle=THROTTLE,
         )
 
-        # Both functions push to sockets: api after writes, ws for presence events.
-        for fn in (api_fn, ws_fn):
-            ws_stage.grant_management_api_access(fn)
-            fn.add_environment("WS_CALLBACK_URL", ws_stage.callback_url)
+        # Both functions push to sockets: api after writes, websocket for presence events.
+        for fn in (api_fn, websocket_fn):
+            websocket_stage.grant_management_api_access(fn)
+            fn.add_environment("WEBSOCKET_CALLBACK_URL", websocket_stage.callback_url)
 
         CfnOutput(self, "ApiUrl", value=http_stage.url)
-        CfnOutput(self, "WsUrl", value=ws_stage.url)
+        CfnOutput(self, "WebsocketUrl", value=websocket_stage.url)

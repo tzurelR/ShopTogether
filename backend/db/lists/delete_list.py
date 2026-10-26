@@ -5,7 +5,8 @@ from db.lists.get_list import get_list
 from db.table import batch_delete
 
 
-def delete_list(list_id: str) -> None:
+def delete_list(list_id: str) -> list[dict]:
+    """Returns the deleted LIST#id rows (META, items, members, invites, connections)."""
     rows = get_list(list_id)
     extra: list[dict] = []
     for row in rows:
@@ -17,3 +18,4 @@ def delete_list(list_id: str) -> None:
     # USER rows first, so the list leaves everyone's "My lists" even if a later batch fails.
     batch_delete(extra)
     batch_delete([keys.key(row["PK"], row["SK"]) for row in rows])
+    return rows

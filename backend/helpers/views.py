@@ -1,8 +1,8 @@
 """Table rows -> the JSON the API returns."""
 
 
-def list_view(meta: dict, role: str) -> dict:
-    return {
+def list_view(meta: dict, role: str | None = None) -> dict:
+    view = {
         "id": meta["listId"],
         "name": meta["name"],
         "ownerId": meta["ownerId"],
@@ -13,6 +13,9 @@ def list_view(meta: dict, role: str) -> dict:
         "createdAt": meta["createdAt"],
         "updatedAt": meta["updatedAt"],
     }
+    if role is None:
+        del view["role"]
+    return view
 
 
 def item_view(row: dict) -> dict:
@@ -34,4 +37,10 @@ def member_view(row: dict) -> dict:
 
 def invite_view(row: dict) -> dict:
     # Never return the token: it is the secret in the invite link.
-    return {"email": row["email"], "invitedBy": row.get("invitedBy"), "expiresAt": row.get("expiresAt")}
+    return {
+        "email": row["email"],
+        "invitedBy": row.get("invitedBy"),
+        "invitedByEmail": row.get("invitedByEmail"),
+        "createdAt": row.get("createdAt"),
+        "expiresAt": row.get("expiresAt"),
+    }

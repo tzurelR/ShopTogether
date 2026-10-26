@@ -5,9 +5,11 @@ invites/ and members/ (ST-12).
 """
 
 from helpers.request import Handler
-from routes import items, lists
+from routes import invites, items, lists, members
 
 ROUTES: dict[str, Handler] = {
     **lists.ROUTES,
     **items.ROUTES,
+    **invites.ROUTES,
+    **members.ROUTES,
 }

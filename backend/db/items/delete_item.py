@@ -9,12 +9,12 @@ from helpers.constants import ITEM_WRITE_ATTEMPTS
 from helpers.errors import Conflict
 
 
-def delete_item(list_id: str, item_id: str, now: str) -> bool:
-    """Returns False if the item doesn't exist."""
+def delete_item(list_id: str, item_id: str, now: str) -> dict | None:
+    """Returns the deleted item, or None if it doesn't exist."""
     for _ in range(ITEM_WRITE_ATTEMPTS):
         current = get_item(list_id, item_id)
         if current is None:
-            return False
+            return None
         done = current.get("done", False)
         try:
             transact_write([
@@ -35,7 +35,7 @@ def delete_item(list_id: str, item_id: str, now: str) -> bool:
             if is_condition_failure(err):
                 continue  # changed or deleted meanwhile: re-read and try again
             raise
-        return True
+        return current
     if get_item(list_id, item_id) is None:
-        return False
+        return None
     raise Conflict("Someone else is editing this item. Try again.")

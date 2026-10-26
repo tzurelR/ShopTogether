@@ -1,5 +1,7 @@
 """GET /lists/{listId}"""
 
+import time
+
 from db import keys
 from db.lists.get_list import get_list
 from helpers.access import list_not_found
@@ -24,7 +26,7 @@ def getlist(req: Request) -> dict:
             items.append(item_view(row))
         elif sk.startswith(keys.MEMBER_PREFIX):
             members.append(member_view(row))
-        elif sk.startswith(keys.INVITE_PREFIX):
+        elif sk.startswith(keys.INVITE_PREFIX) and row.get("expiresAt", 0) > time.time():
             invites.append(invite_view(row))
 
     me = next((m for m in members if m["sub"] == req.user.sub), None)
