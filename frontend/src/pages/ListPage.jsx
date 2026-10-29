@@ -17,6 +17,7 @@ import ShareSheet from "../components/ShareSheet.jsx";
 import Sheet from "../components/Sheet.jsx";
 import Toast from "../components/Toast.jsx";
 import { displayName } from "../lib/displayName.js";
+import { haptic } from "../lib/haptic.js";
 import { listColor } from "../lib/listColor.js";
 import { describeEvent } from "../realtime/describeEvent.js";
 import { useListSocket } from "../realtime/useListSocket.js";
@@ -83,6 +84,12 @@ export default function ListPage() {
 
   const clearToast = useCallback(() => setToast(""), []);
 
+  // A just-checked item stays in the open list for a moment before moving to Completed.
+  const linger = useCallback((id) => {
+    setLingering((current) => ({ ...current, [id]: true }));
+    setTimeout(() => setLingering(({ [id]: _, ...rest }) => rest), LINGER_MS);
+  }, []);
+
   function handleEvent(event) {
     const mine = event.by === user?.sub;
     const nameOf = (sub) =>
@@ -137,6 +144,8 @@ export default function ListPage() {
     }
     if (mine) return;
     if (event.type === "item.created" || event.type === "item.updated") flash(event.item.id);
+    // Someone else checked it off: leave it in place briefly so you see it happen.
+    if (event.type === "item.updated" && previousItem && !previousItem.done && event.item.done) linger(event.item.id);
     const text = describeEvent(event, { nameOf, previousItem });
     if (text) setToast(text);
   }
@@ -184,6 +193,7 @@ export default function ListPage() {
   }
 
   async function removeItem(item) {
+    haptic(15);
     setError("");
     const index = items.findIndex((i) => i.id === item.id);
     setItems((current) => current.filter((i) => i.id !== item.id));
@@ -202,10 +212,8 @@ export default function ListPage() {
   }
 
   function toggle(item) {
-    if (!item.done) {
-      setLingering((current) => ({ ...current, [item.id]: true }));
-      setTimeout(() => setLingering(({ [item.id]: _, ...rest }) => rest), LINGER_MS);
-    }
+    haptic();
+    if (!item.done) linger(item.id);
     changeItem(item, { done: !item.done });
   }
 

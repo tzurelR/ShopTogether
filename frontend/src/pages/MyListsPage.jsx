@@ -5,6 +5,7 @@ import { createList } from "../api/createList.js";
 import { deleteList } from "../api/deleteList.js";
 import { getLists } from "../api/getLists.js";
 import { updateList } from "../api/updateList.js";
+import { onAppResume } from "../lib/onAppResume.js";
 import AccountMenu from "../components/AccountMenu.jsx";
 import Alert from "../components/Alert.jsx";
 import AppBar from "../components/AppBar.jsx";
@@ -12,6 +13,7 @@ import BottomBar from "../components/BottomBar.jsx";
 import ConfirmDelete from "../components/ConfirmDelete.jsx";
 import ListCard from "../components/ListCard.jsx";
 import ListNameForm from "../components/ListNameForm.jsx";
+import InstallHint from "../components/InstallHint.jsx";
 import Sheet from "../components/Sheet.jsx";
 
 // "8 items left in 3 lists" under the title.
@@ -44,6 +46,7 @@ export default function MyListsPage() {
 
   useEffect(() => {
     load();
+    return onAppResume(load);
   }, [load]);
 
   async function handleCreate(name) {
@@ -72,6 +75,7 @@ export default function MyListsPage() {
       </AppBar>
 
       <Alert kind="info">{location.state?.message}</Alert>
+      <InstallHint />
 
       {error && (
         <Alert>

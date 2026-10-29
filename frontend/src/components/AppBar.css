@@ -1,17 +1,33 @@
-.nav { display: flex; flex-direction: column; gap: 2px; }
-.nav-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
+.nav { display: flex; flex-direction: column; gap: 2px; padding-bottom: 6px; }
+.nav-bar {
+  position: sticky; top: 0; z-index: 15;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; min-height: 44px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left));
+  padding-top: env(safe-area-inset-top);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.nav-bar-compact {
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 0.5px 0 var(--line);
+}
+.nav-side { display: flex; align-items: center; min-width: 0; }
+.nav-actions { justify-content: flex-end; gap: 12px; }
 .nav-back {
-  display: inline-flex; align-items: center; gap: 2px; font-size: 1.0625rem;
+  display: inline-flex; align-items: center; gap: 2px; min-height: 44px; font-size: 1.0625rem;
   color: var(--accent); text-decoration: none;
 }
 .nav-back span { font-size: 1.9rem; line-height: 1; margin-top: -4px; }
-.nav-actions { display: flex; align-items: center; gap: 12px; }
+.nav-compact-title {
+  font-size: 1.0625rem; font-weight: 600; max-width: 50vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  opacity: 0; transition: opacity 0.15s ease;
+}
+.nav-bar-compact .nav-compact-title { opacity: 1; }
 .large-title {
   font-size: 2.125rem; font-weight: 700; letter-spacing: 0.01em; color: var(--accent);
   overflow-wrap: anywhere; padding: 0 2px;
 }
-.nav-button {
-  border: 0; background: none; color: var(--accent); font-size: 1.0625rem; cursor: pointer; padding: 6px 0;
-}
 .large-subtitle { color: var(--muted); font-size: 0.9375rem; padding: 0 2px; margin-top: -2px; }
-.nav { padding-bottom: 6px; }
+.nav-button {
+  border: 0; background: none; color: var(--accent); font-size: 1.0625rem; cursor: pointer; padding: 6px 0; min-height: 44px;
+}

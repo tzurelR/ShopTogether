@@ -1,5 +1,6 @@
 import { getAccessToken } from "../auth/session.js";
 import { config } from "../config.js";
+import { onAppResume } from "../lib/onAppResume.js";
 
 const PING_MS = 5 * 60 * 1000; // API Gateway drops sockets idle for 10 minutes
 const MAX_BACKOFF_MS = 30 * 1000;
@@ -23,16 +24,22 @@ export class ListSocket {
     this.retryTimer = null;
     this.pingTimer = null;
     this.retryNow = () => this.reconnectSoon(0);
+    this.stopResume = null;
   }
 
   start() {
     window.addEventListener("online", this.retryNow);
+    // Phones suspend background tabs and drop the socket; reconnect the moment we're back.
+    this.stopResume = onAppResume(() => {
+      if (this.socket?.readyState !== WebSocket.OPEN) this.retryNow();
+    });
     this.connect();
   }
 
   stop() {
     this.stopped = true;
     window.removeEventListener("online", this.retryNow);
+    this.stopResume?.();
     clearTimeout(this.retryTimer);
     clearInterval(this.pingTimer);
     if (this.socket) {
