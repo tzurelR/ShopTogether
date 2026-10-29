@@ -7,6 +7,7 @@ import Alert from "../components/Alert.jsx";
 import AuthLayout from "../components/AuthLayout.jsx";
 import PasswordField from "../components/PasswordField.jsx";
 import TextField from "../components/TextField.jsx";
+import { t } from "../i18n/i18n.js";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -36,19 +37,20 @@ export default function SignupPage() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Share lists and shop together in real time."
+      title={t("signup.title")}
+      subtitle={t("signup.subtitle")}
       footer={
         <>
-          Already have an account? <Link to={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}>Log in</Link>
+          {t("signup.haveAccount")} <Link to={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("signup.logIn")}</Link>
         </>
       }
     >
       <form className="stack" onSubmit={onSubmit}>
         <TextField
           id="email"
-          label="Email"
+          label={t("auth.email")}
           type="email"
+          dir="ltr"
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -56,17 +58,17 @@ export default function SignupPage() {
         />
         <PasswordField
           id="password"
-          label="Password"
+          label={t("auth.password")}
           autoComplete="new-password"
           minLength={8}
-          hint="At least 8 characters, with an upper-case letter, a lower-case letter and a number."
+          hint={t("auth.passwordHint")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
         <Alert>{error}</Alert>
         <button className="btn" type="submit" disabled={busy}>
-          {busy ? "Creating account…" : "Create account"}
+          {busy ? t("signup.busy") : t("signup.submit")}
         </button>
       </form>
     </AuthLayout>

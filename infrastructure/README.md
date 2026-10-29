@@ -53,6 +53,23 @@ cdk deploy ShopTogether-dev-Email ShopTogether-dev-Hosting --outputs-file output
 cdk deploy ShopTogether-dev-Api --outputs-file outputs.json
 ```
 
+### Push notifications (Web Push)
+
+Push is on when `vapidPublicKey` is set in `cdk.json`; the Api stack then adds the
+`PushSenderFunction` (Node.js) and the `/push/subscriptions` routes. The private key is
+in `infrastructure/vapid.local.json` (git-ignored) and must be stored in SSM once:
+
+```bash
+cd infrastructure
+aws ssm put-parameter --region eu-central-1 --type SecureString \
+  --name /shoptogether/dev/vapid-private-key \
+  --value "$(node -p "require('./vapid.local.json').privateKey")"
+```
+
+The frontend needs the same public key as `VITE_VAPID_PUBLIC_KEY` in `frontend/.env.local`.
+To rotate keys: generate a new pair, update both places and SSM (`--overwrite`), redeploy;
+devices must turn notifications on again.
+
 ### SES sandbox
 
 A new SES account is in the **sandbox**: it can only send to addresses you've verified, max 200 emails a day.

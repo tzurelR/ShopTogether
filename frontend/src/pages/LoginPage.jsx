@@ -9,6 +9,7 @@ import Alert from "../components/Alert.jsx";
 import AuthLayout from "../components/AuthLayout.jsx";
 import PasswordField from "../components/PasswordField.jsx";
 import TextField from "../components/TextField.jsx";
+import { t } from "../i18n/i18n.js";
 
 export default function LoginPage() {
   const { logIn } = useAuth();
@@ -36,7 +37,7 @@ export default function LoginPage() {
         // Signed up but never entered the code: send a fresh one and finish confirming.
         await resendCode(address).catch(() => {});
         navigate(withNext(`/confirm?email=${encodeURIComponent(address)}`), {
-          state: { password, message: "Confirm your email first. We sent you a new code." },
+          state: { password, message: t("login.confirmFirst") },
         });
         return;
       }
@@ -47,22 +48,23 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back"
+      title={t("login.title")}
       footer={
         <>
-          New here? <Link to={withNext("/signup")}>Create an account</Link>
+          {t("login.newHere")} <Link to={withNext("/signup")}>{t("login.createAccount")}</Link>
         </>
       }
     >
       <Alert kind="info">
         {location.state?.message ||
-          (next.startsWith("/invite/") ? "Someone shared a list with you. Log in, or create an account, to open it." : "")}
+          (next.startsWith("/invite/") ? t("login.invited") : "")}
       </Alert>
       <form className="stack" onSubmit={onSubmit}>
         <TextField
           id="email"
-          label="Email"
+          label={t("auth.email")}
           type="email"
+          dir="ltr"
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -70,7 +72,7 @@ export default function LoginPage() {
         />
         <PasswordField
           id="password"
-          label="Password"
+          label={t("auth.password")}
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -78,10 +80,10 @@ export default function LoginPage() {
         />
         <Alert>{error}</Alert>
         <button className="btn" type="submit" disabled={busy}>
-          {busy ? "Logging in…" : "Log in"}
+          {busy ? t("login.busy") : t("login.submit")}
         </button>
         <Link className="small center auth-link" to={`/forgot?email=${encodeURIComponent(email.trim())}`}>
-          Forgot password?
+          {t("login.forgot")}
         </Link>
       </form>
     </AuthLayout>

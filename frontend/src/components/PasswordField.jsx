@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import "./PasswordField.css";
+import { t } from "../i18n/i18n.js";
 
 function EyeIcon({ open }) {
   return (
@@ -28,12 +29,13 @@ export default function PasswordField({ id, label, hint, ...inputProps }) {
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
+          dir="ltr"
           {...inputProps}
         />
         <button
           type="button"
           className="password-toggle"
-          aria-label={visible ? "Hide password" : "Show password"}
+          aria-label={visible ? t("auth.hidePassword") : t("auth.showPassword")}
           aria-pressed={visible}
           aria-controls={id}
           // Keep the cursor in the field when tapping the eye.

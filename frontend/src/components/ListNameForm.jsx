@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import Alert from "./Alert.jsx";
 import TextField from "./TextField.jsx";
+import { t } from "../i18n/i18n.js";
 
 // Name field + Save/Cancel, used for both "New list" and "Rename".
 export default function ListNameForm({ initialName = "", submitLabel, busyLabel, onSubmit, onCancel }) {
@@ -25,17 +26,18 @@ export default function ListNameForm({ initialName = "", submitLabel, busyLabel,
     <form className="stack" onSubmit={handleSubmit}>
       <TextField
         id="list-name"
-        label="List name"
+        label={t("lists.nameLabel")}
         value={name}
         onChange={(e) => setName(e.target.value)}
         maxLength={80}
-        placeholder="Weekly groceries"
+        placeholder={t("lists.namePlaceholder")}
+        dir="auto"
         autoFocus
         required
       />
       <Alert>{error}</Alert>
       <div className="sheet-actions">
-        <button className="btn btn-ghost" type="button" onClick={onCancel}>Cancel</button>
+        <button className="btn btn-ghost" type="button" onClick={onCancel}>{t("common.cancel")}</button>
         <button className="btn" type="submit" disabled={busy || !name.trim()}>
           {busy ? busyLabel : submitLabel}
         </button>

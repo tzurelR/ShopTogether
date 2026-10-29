@@ -11,7 +11,8 @@ from .config import Config
 
 # The whole backend/ folder is one asset, so handlers can import backend/shared.
 BACKEND_DIR = Path(__file__).resolve().parents[2] / "backend"
-ASSET_EXCLUDES = [".venv", "**/__pycache__", "**/*.pyc", "tests", ".pytest_cache", "README.md", "requirements*.txt"]
+ASSET_EXCLUDES = [".venv", "**/__pycache__", "**/*.pyc", "tests", ".pytest_cache", "README.md", "requirements*.txt", "push_sender"]
+PUSH_SENDER_DIR = BACKEND_DIR / "push_sender"
 
 
 def python_function(
@@ -39,6 +40,37 @@ def python_function(
         timeout=Duration.seconds(10),
         code=lambda_.Code.from_asset(str(BACKEND_DIR), exclude=ASSET_EXCLUDES),
         handler=handler,
+        environment={"STAGE": config.stage, **(environment or {})},
+        log_group=log_group,
+    )
+
+
+def node_function(
+    scope: Construct,
+    id: str,
+    *,
+    config: Config,
+    code_dir: Path,
+    description: str,
+    environment: dict[str, str] | None = None,
+) -> lambda_.Function:
+    """Node.js 24 on arm64 with the same log and timeout defaults (AWS SDK v3 is built in)."""
+    log_group = logs.LogGroup(
+        scope,
+        f"{id}Logs",
+        retention=logs.RetentionDays.TWO_WEEKS,
+        removal_policy=config.removal_policy,
+    )
+    return lambda_.Function(
+        scope,
+        id,
+        description=description,
+        runtime=lambda_.Runtime.NODEJS_24_X,
+        architecture=lambda_.Architecture.ARM_64,
+        memory_size=256,
+        timeout=Duration.seconds(15),
+        code=lambda_.Code.from_asset(str(code_dir)),
+        handler="index.handler",
         environment={"STAGE": config.stage, **(environment or {})},
         log_group=log_group,
     )

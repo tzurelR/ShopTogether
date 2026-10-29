@@ -19,6 +19,14 @@
         var t = localStorage.getItem("shoptogether.theme");
         if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
       } catch (e) {}
+      // Same for language: Hebrew pages start right-to-left (see src/i18n/i18n.js).
+      try {
+        var l = localStorage.getItem("shoptogether.language");
+        var langs = navigator.languages || [navigator.language];
+        var he = l === "he" || (l !== "en" && langs.some(function (x) { return /^(he|iw)\b/i.test(x || ""); }));
+        document.documentElement.lang = he ? "he" : "en";
+        document.documentElement.dir = he ? "rtl" : "ltr";
+      } catch (e) {}
     </script>
     <title>ShopTogether</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

@@ -11,6 +11,7 @@ from helpers.clock import now_iso
 from helpers.cognito import user_email
 from helpers.emails import mask_email
 from helpers.errors import Forbidden
+from helpers.notify import notify
 from helpers.request import Request
 from helpers.responses import ok
 from helpers.views import member_view
@@ -40,4 +41,5 @@ def acceptinvite(req: Request) -> dict:
         raise invite_gone()
 
     broadcast(list_id, {"type": "member.joined", "listId": list_id, "by": req.user.sub, "member": member_view(member)})
+    notify(list_id, "member.joined", req.user.sub, email)
     return ok({"listId": list_id})

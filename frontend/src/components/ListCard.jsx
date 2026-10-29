@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { listColor } from "../lib/listColor.js";
 import "./ListCard.css";
+import { t } from "../i18n/i18n.js";
 
 function ListIcon() {
   return (
@@ -33,20 +34,18 @@ export default function ListCard({ list, onRename, onDelete }) {
       <Link to={`/lists/${list.id}`} className="list-row-link">
         <span className="list-row-icon"><ListIcon /></span>
         <span className="list-row-text">
-          <span className="list-row-name">{list.name}</span>
-          {others > 0 && (
-            <span className="list-row-sub">Shared with {others} {others === 1 ? "person" : "people"}</span>
-          )}
+          <span className="list-row-name" dir="auto">{list.name}</span>
+          {others > 0 && <span className="list-row-sub">{t("lists.sharedWith", { count: others })}</span>}
         </span>
-        <span className="list-row-count" aria-label={`${left} items left`}>{left}</span>
+        <span className="list-row-count" aria-label={t("lists.left", { count: left })}>{left}</span>
       </Link>
 
       <details className="list-row-menu">
-        <summary aria-label={`Options for ${list.name}`}>⋯</summary>
+        <summary aria-label={t("lists.options", { name: list.name })}>⋯</summary>
         <div className="list-row-menu-items">
-          <button type="button" onClick={(e) => pick(e, onRename)}>Rename</button>
+          <button type="button" onClick={(e) => pick(e, onRename)}>{t("lists.rename")}</button>
           {list.role === "owner" && (
-            <button type="button" className="danger" onClick={(e) => pick(e, onDelete)}>Delete</button>
+            <button type="button" className="danger" onClick={(e) => pick(e, onDelete)}>{t("common.delete")}</button>
           )}
         </div>
       </details>

@@ -10,3 +10,9 @@
 }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+.toast-action { display: flex; align-items: center; gap: 14px; padding-inline: 18px 8px; }
+.toast-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast-button {
+  flex: none; border: 0; border-radius: 999px; padding: 6px 12px; min-height: 32px; cursor: pointer;
+  background: color-mix(in srgb, var(--bg) 18%, transparent); color: var(--bg); font-weight: 700; font-size: 0.9375rem;
+}

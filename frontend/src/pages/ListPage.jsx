@@ -21,6 +21,7 @@ import { haptic } from "../lib/haptic.js";
 import { listColor } from "../lib/listColor.js";
 import { describeEvent } from "../realtime/describeEvent.js";
 import { useListSocket } from "../realtime/useListSocket.js";
+import { t } from "../i18n/i18n.js";
 
 // Items with a position first (by position), then by ID (= creation time), like the API.
 function byOrder(a, b) {
@@ -97,12 +98,14 @@ export default function ListPage() {
 
     // These two take you off the page, even when the change came from your own other tab.
     if (event.type === "list.deleted") {
-      const by = mine ? "" : ` by ${displayName(nameOf(event.by))}`;
-      navigate("/", { replace: true, state: { message: `“${event.list.name}” was deleted${by}.` } });
+      const message = mine
+        ? t("lists.deleted", { name: event.list.name })
+        : t("lists.deletedBy", { name: event.list.name, who: displayName(nameOf(event.by)) });
+      navigate("/", { replace: true, state: { message } });
       return;
     }
     if (event.type === "member.removed" && event.member.sub === user?.sub) {
-      const message = mine ? `You left “${list?.name}”.` : `You were removed from “${list?.name}”.`;
+      const message = t(mine ? "lists.youLeft" : "lists.youWereRemoved", { name: list?.name });
       navigate("/", { replace: true, state: { message } });
       return;
     }
@@ -173,7 +176,7 @@ export default function ListPage() {
       );
     } catch (err) {
       setItems((current) => current.filter((i) => i.id !== temp.id));
-      setError(`Couldn't add “${fields.text}”. ${err.message}`);
+      setError(t("list.couldntAdd", { text: fields.text, reason: err.message }));
     }
   }
 
@@ -188,7 +191,7 @@ export default function ListPage() {
       } else {
         replaceItem(item.id, item);
       }
-      setError(`Couldn't save “${item.text}”. ${err.message}`);
+      setError(t("list.couldntSave", { text: item.text, reason: err.message }));
     }
   }
 
@@ -197,18 +200,31 @@ export default function ListPage() {
     setError("");
     const index = items.findIndex((i) => i.id === item.id);
     setItems((current) => current.filter((i) => i.id !== item.id));
+    setToast({
+      text: t("list.removed", { text: item.text }),
+      action: { label: t("list.undo"), onClick: () => restoreItem(item) },
+    });
     try {
       await deleteItem(listId, item.id);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {
+        setToast("");
         setItems((current) => {
           const next = [...current];
           next.splice(Math.min(index, next.length), 0, item);
           return next;
         });
-        setError(`Couldn't remove “${item.text}”. ${err.message}`);
+        setError(t("list.couldntRemove", { text: item.text, reason: err.message }));
       }
     }
+  }
+
+  // Undo a delete: add the item back with the same name, amount, check state and place.
+  function restoreItem(item) {
+    const fields = { text: item.text, done: !!item.done };
+    if (item.qty) fields.qty = item.qty;
+    if (item.position != null) fields.position = item.position;
+    addItem(fields);
   }
 
   function toggle(item) {
@@ -220,11 +236,11 @@ export default function ListPage() {
   if (status === "missing") {
     return (
       <main className="page">
-        <AppBar title="List" back="/" backLabel="Lists" />
+        <AppBar title={t("list.fallbackTitle")} back="/" backLabel={t("list.back")} />
         <div className="card stack center">
-          <p><b>List not found.</b></p>
-          <p className="muted small">It may have been deleted, or you're no longer a member.</p>
-          <Link to="/">Back to My lists</Link>
+          <p><b>{t("list.notFoundTitle")}</b></p>
+          <p className="muted small">{t("list.notFoundBody")}</p>
+          <Link to="/">{t("list.backToLists")}</Link>
         </div>
       </main>
     );
@@ -240,14 +256,14 @@ export default function ListPage() {
     <main className="page" style={{ "--accent": listColor(listId) }}>
       <AppBar
         title={list?.name ?? ""}
-        subtitle={status === "ready" ? (left ? `${left} ${left === 1 ? "item" : "items"} left` : "All done") : null}
+        subtitle={status === "ready" ? (left ? t("lists.left", { count: left }) : t("list.allDone")) : null}
         back="/"
-        backLabel="Lists"
+        backLabel={t("list.back")}
       >
         {status === "ready" && <LivePill status={liveStatus} present={present} mySub={user?.sub} />}
         {status === "ready" && (
           <button className="nav-button" type="button" onClick={() => setSharing(true)}>
-            Share
+            {t("list.share")}
           </button>
         )}
       </AppBar>
@@ -258,21 +274,21 @@ export default function ListPage() {
           {status === "failed" && (
             <>
               {" "}
-              <button className="btn-link" type="button" onClick={load}>Try again</button>
+              <button className="btn-link" type="button" onClick={load}>{t("common.tryAgain")}</button>
             </>
           )}
         </Alert>
       )}
 
-      {status === "loading" && <p className="muted small">Loading items…</p>}
+      {status === "loading" && <p className="muted small">{t("list.loading")}</p>}
 
       {status === "ready" && (
         <>
           {open.length === 0 && !adding && (
             <div className="empty">
               <div className="empty-icon" aria-hidden="true">{done.length ? "✓" : "+"}</div>
-              <p className="empty-title">{done.length ? "All done" : "Nothing on this list yet"}</p>
-              <p className="muted">{done.length ? "Everything is checked off." : "Tap New Item to add the first thing."}</p>
+              <p className="empty-title">{done.length ? t("list.allDone") : t("list.emptyTitle")}</p>
+              <p className="muted">{done.length ? t("list.allDoneBody") : t("list.emptyBody")}</p>
             </div>
           )}
           {(open.length > 0 || adding) && (
@@ -285,9 +301,9 @@ export default function ListPage() {
           {done.length > 0 && (
             <>
               <div className="completed-header">
-                <span>{done.length} Completed</span>
+                <span>{t("list.completed", { count: done.length })}</span>
                 <button type="button" onClick={() => setShowCompleted((v) => !v)}>
-                  {showCompleted ? "Hide" : "Show"}
+                  {showCompleted ? t("list.hide") : t("list.show")}
                 </button>
               </div>
               {showCompleted && (
@@ -304,7 +320,7 @@ export default function ListPage() {
           <BottomBar
             left={
               <button className="toolbar-button" type="button" onClick={() => setAdding(true)}>
-                <span className="toolbar-plus" aria-hidden="true">+</span> New Item
+                <span className="toolbar-plus" aria-hidden="true">+</span> {t("list.newItem")}
               </button>
             }
           />
@@ -312,7 +328,7 @@ export default function ListPage() {
       )}
       <Toast message={toast} onDone={clearToast} />
 
-      <Sheet open={sharing && !!list} title="Share list" onClose={() => setSharing(false)}>
+      <Sheet open={sharing && !!list} title={t("share.title")} onClose={() => setSharing(false)}>
         {list && (
           <ShareSheet
             list={list}
@@ -322,7 +338,7 @@ export default function ListPage() {
             onInvited={(invite) => setInvites((current) => [...current.filter((i) => i.email !== invite.email), invite])}
             onInviteCancelled={(email) => setInvites((current) => current.filter((i) => i.email !== email))}
             onMemberRemoved={(sub) => setMembers((current) => current.filter((m) => m.sub !== sub))}
-            onLeft={() => navigate("/", { replace: true, state: { message: `You left “${list.name}”.` } })}
+            onLeft={() => navigate("/", { replace: true, state: { message: t("lists.youLeft", { name: list.name }) } })}
           />
         )}
       </Sheet>

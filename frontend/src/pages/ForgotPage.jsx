@@ -8,6 +8,7 @@ import Alert from "../components/Alert.jsx";
 import AuthLayout from "../components/AuthLayout.jsx";
 import PasswordField from "../components/PasswordField.jsx";
 import TextField from "../components/TextField.jsx";
+import { t } from "../i18n/i18n.js";
 
 // Two steps on one page: ask for the code, then set the new password with it.
 export default function ForgotPage() {
@@ -43,7 +44,7 @@ export default function ForgotPage() {
       await confirmForgotPassword(address, code.trim(), password);
       navigate(`/login?email=${encodeURIComponent(address)}`, {
         replace: true,
-        state: { message: "Your password is changed. Log in with the new one." },
+        state: { message: t("forgot.done") },
       });
     } catch (err) {
       setError(errorMessage(err));
@@ -54,14 +55,15 @@ export default function ForgotPage() {
   if (step === "reset") {
     return (
       <AuthLayout
-        title="Set a new password"
-        subtitle={`If ${email.trim()} has an account, we emailed it a 6-digit code.`}
-        footer={<Link to="/login">Back to log in</Link>}
+        title={t("forgot.setTitle")}
+        subtitle={t("forgot.sentTo", { email: email.trim() })}
+        footer={<Link to="/login">{t("forgot.backToLogin")}</Link>}
       >
         <form className="stack" onSubmit={resetPassword}>
           <TextField
             id="code"
-            label="Code"
+            label={t("auth.code")}
+            dir="ltr"
             inputMode="numeric"
             autoComplete="one-time-code"
             pattern="[0-9]{6}"
@@ -72,20 +74,20 @@ export default function ForgotPage() {
           />
           <PasswordField
             id="new-password"
-            label="New password"
+            label={t("auth.newPassword")}
             autoComplete="new-password"
             minLength={8}
-            hint="At least 8 characters, with an upper-case letter, a lower-case letter and a number."
+            hint={t("auth.passwordHint")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
           <Alert>{error}</Alert>
           <button className="btn" type="submit" disabled={busy}>
-            {busy ? "Saving…" : "Save new password"}
+            {busy ? t("common.saving") : t("forgot.saveNew")}
           </button>
           <button className="btn-link small" type="button" onClick={() => setStep("email")}>
-            Use a different email
+            {t("forgot.otherEmail")}
           </button>
         </form>
       </AuthLayout>
@@ -94,15 +96,16 @@ export default function ForgotPage() {
 
   return (
     <AuthLayout
-      title="Reset your password"
-      subtitle="We'll email you a code to set a new password."
-      footer={<Link to="/login">Back to log in</Link>}
+      title={t("forgot.title")}
+      subtitle={t("forgot.subtitle")}
+      footer={<Link to="/login">{t("forgot.backToLogin")}</Link>}
     >
       <form className="stack" onSubmit={sendCode}>
         <TextField
           id="email"
-          label="Email"
+          label={t("auth.email")}
           type="email"
+          dir="ltr"
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -110,7 +113,7 @@ export default function ForgotPage() {
         />
         <Alert>{error}</Alert>
         <button className="btn" type="submit" disabled={busy}>
-          {busy ? "Sending…" : "Send code"}
+          {busy ? t("forgot.sending") : t("forgot.send")}
         </button>
       </form>
     </AuthLayout>

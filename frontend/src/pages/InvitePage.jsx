@@ -5,6 +5,7 @@ import { acceptInvite } from "../api/acceptInvite.js";
 import { getInvite } from "../api/getInvite.js";
 import { useAuth } from "../auth/useAuth.js";
 import AuthLayout from "../components/AuthLayout.jsx";
+import { t } from "../i18n/i18n.js";
 
 /**
  * /invite/:token — only reached logged in (the guard sends others through login or
@@ -22,18 +23,20 @@ export default function InvitePage() {
     if (started.current) return; // StrictMode runs effects twice in dev; join once
     started.current = true;
     (async () => {
+      let info = null;
       try {
-        const info = await getInvite(token);
+        info = await getInvite(token);
         setInvite(info);
         if (!info.alreadyMember) await acceptInvite(token);
         navigate(`/lists/${info.listId}`, { replace: true });
       } catch (err) {
         if (err.status === 403) {
-          setProblem({ kind: "wrong-account", title: "This invite is for someone else", message: err.message });
+          const message = info?.email ? t("invite.wrongBody", { email: info.email }) : err.message;
+          setProblem({ kind: "wrong-account", title: t("invite.wrongTitle"), message });
         } else if (err.status === 404) {
-          setProblem({ title: "This invite can't be used", message: err.message });
+          setProblem({ title: t("invite.goneTitle"), message: t("invite.goneBody") });
         } else {
-          setProblem({ title: "Couldn't open the invite", message: err.message });
+          setProblem({ title: t("invite.failedTitle"), message: err.message });
         }
       }
     })();
@@ -46,12 +49,12 @@ export default function InvitePage() {
 
   if (problem) {
     return (
-      <AuthLayout title={problem.title} subtitle={problem.message} footer={<Link to="/">Go to My lists</Link>}>
+      <AuthLayout title={problem.title} subtitle={problem.message} footer={<Link to="/">{t("invite.goToLists")}</Link>}>
         {problem.kind === "wrong-account" && (
           <div className="stack">
-            <p className="muted small">You're logged in as {user?.email}.</p>
+            <p className="muted small">{t("invite.loggedInAs", { email: user?.email })}</p>
             <button className="btn" type="button" onClick={switchAccount}>
-              Log out and switch account
+              {t("invite.switch")}
             </button>
           </div>
         )}
@@ -61,8 +64,8 @@ export default function InvitePage() {
 
   return (
     <AuthLayout
-      title={invite ? `Joining “${invite.listName}”…` : "Opening your invite…"}
-      subtitle={invite?.invitedByEmail ? `Shared by ${invite.invitedByEmail}` : undefined}
+      title={invite ? t("invite.joining", { name: invite.listName }) : t("invite.opening")}
+      subtitle={invite?.invitedByEmail ? t("invite.sharedBy", { email: invite.invitedByEmail }) : undefined}
     />
   );
 }

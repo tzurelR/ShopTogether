@@ -1,33 +1,24 @@
 import { useState } from "react";
 
+import { t } from "../i18n/i18n.js";
 import { getTheme, setTheme } from "../theme/theme.js";
-import "./ThemePicker.css";
+import Segmented from "./Segmented.jsx";
 
-const LABELS = { system: "Auto", light: "Light", dark: "Dark" };
-
-// Segmented control: Auto (follow the device) / Light / Dark.
+// Auto (follow the device) / Light / Dark.
 export default function ThemePicker() {
   const [theme, setChoice] = useState(getTheme);
-
-  function choose(value) {
-    setChoice(value);
-    setTheme(value);
-  }
-
   return (
-    <div className="segmented" role="radiogroup" aria-label="Appearance">
-      {Object.entries(LABELS).map(([value, label]) => (
-        <button
-          key={value}
-          type="button"
-          role="radio"
-          aria-checked={theme === value}
-          className="segmented-option"
-          onClick={() => choose(value)}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <Segmented
+      label={t("account.appearance")}
+      value={theme}
+      options={["system", "light", "dark"].map((value) => ({
+        value,
+        label: t(value === "system" ? "theme.auto" : `theme.${value}`),
+      }))}
+      onChange={(value) => {
+        setChoice(value);
+        setTheme(value);
+      }}
+    />
   );
 }

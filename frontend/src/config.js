@@ -19,4 +19,6 @@ export const config = {
   // Dev: the Vite proxy (vite.config.js) forwards /api to VITE_API_URL. Build: call it directly.
   apiUrl: import.meta.env.DEV ? "/api" : import.meta.env.VITE_API_URL.replace(/\/$/, ""),
   websocketUrl: import.meta.env.VITE_WEBSOCKET_URL,
+  // Optional: without it the Notifications switch is hidden.
+  vapidPublicKey: import.meta.env.VITE_VAPID_PUBLIC_KEY || "",
 };

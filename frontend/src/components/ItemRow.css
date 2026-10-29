@@ -6,13 +6,13 @@
 /* The row content slides left over the red Delete action. */
 .item-slide {
   position: relative; z-index: 1; display: flex; align-items: flex-start; gap: 12px;
-  padding-left: 14px; min-height: 48px; background: var(--surface);
+  padding-inline-start: 14px; min-height: 48px; background: var(--surface);
   touch-action: pan-y; /* vertical scrolling stays native; sideways moves are ours */
   transition: transform 0.25s ease;
 }
 .item-slide-dragging { transition: none; }
 .item-swipe-delete {
-  position: absolute; top: 0; right: 0; bottom: 0; z-index: 0;
+  position: absolute; top: 0; bottom: 0; inset-inline-end: 0; z-index: 0;
   border: 0; background: var(--live); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
@@ -21,7 +21,7 @@
 /* Round check: hollow ring, filled with a dot when done. The button is a full
    44px tap target (Apple's minimum); the ring is drawn inside it. */
 .item-check {
-  flex: none; width: 44px; height: 48px; margin: 0 -8px 0 -10px; padding: 0;
+  flex: none; width: 44px; height: 48px; margin-inline: -10px -8px; padding: 0;
   border: 0; background: none; cursor: pointer; display: grid; place-items: center;
 }
 .item-check::before {
@@ -39,19 +39,24 @@
 
 /* Separator starts after the check, like iOS. */
 .item-body {
-  flex: 1; min-width: 0; padding: 0 14px 0 0; border-bottom: 0.5px solid var(--line);
+  flex: 1; min-width: 0; padding-inline-end: 14px; border-bottom: 0.5px solid var(--line);
   display: flex; align-items: center; min-height: 48px;
 }
 .items > .item:last-child .item-body { border-bottom: 0; }
-.item-new { display: flex; align-items: flex-start; gap: 12px; padding-left: 14px; min-height: 48px; }
+.item-new { display: flex; align-items: flex-start; gap: 12px; padding-inline-start: 14px; min-height: 48px; }
 
 .item-text {
   -webkit-touch-callout: none;
-  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
-  background: none; border: 0; padding: 13px 0; text-align: left; cursor: text; font-size: 1.0625rem;
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;
+  background: none; border: 0; padding: 13px 0; text-align: start; cursor: text; font-size: 1.0625rem;
 }
-.item-title { overflow-wrap: anywhere; }
-.item-note { font-size: 0.875rem; color: var(--muted); }
+.item-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+/* Amount badge: "2", "1 kg". */
+.item-qty {
+  flex: none; padding: 2px 9px; border-radius: 999px; font-size: 0.875rem; font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--accent); background: var(--accent-soft);
+}
+.item-done .item-qty { color: var(--muted); background: var(--sunk); }
 .item-done .item-title { color: var(--muted); transition: color 0.2s ease; }
 
 .item-edit { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }

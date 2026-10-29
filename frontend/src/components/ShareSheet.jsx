@@ -8,6 +8,7 @@ import Alert from "./Alert.jsx";
 import CopyLink from "./CopyLink.jsx";
 import PersonRow from "./PersonRow.jsx";
 import TextField from "./TextField.jsx";
+import { t } from "../i18n/i18n.js";
 
 /**
  * Members, pending invites and the invite form for one list.
@@ -30,7 +31,7 @@ export default function ShareSheet({ list, members, invites, mySub, onInvited, o
       setSent({ email: result.invite.email, link: result.link, emailSent: result.emailSent });
       setEmail("");
     } catch (err) {
-      setError(err.message);
+      setError(err.status === 409 ? t("share.alreadyMember", { email: email.trim().toLowerCase() }) : err.message);
     }
     setBusy(false);
   }
@@ -43,7 +44,8 @@ export default function ShareSheet({ list, members, invites, mySub, onInvited, o
         <form className="stack" onSubmit={invite}>
           <TextField
             id="invite-email"
-            label="Invite by email"
+            label={t("share.inviteLabel")}
+            dir="ltr"
             type="email"
             placeholder="name@example.com"
             autoComplete="off"
@@ -53,7 +55,7 @@ export default function ShareSheet({ list, members, invites, mySub, onInvited, o
           />
           <Alert>{error}</Alert>
           <button className="btn" type="submit" disabled={busy || !email.trim()}>
-            {busy ? "Inviting…" : "Invite"}
+            {busy ? t("share.inviting") : t("share.invite")}
           </button>
         </form>
       )}
@@ -61,23 +63,21 @@ export default function ShareSheet({ list, members, invites, mySub, onInvited, o
       {sent && (
         <div className="stack">
           <Alert kind="info">
-            {sent.emailSent
-              ? `We emailed an invite to ${sent.email}. You can also send them this link:`
-              : `We couldn't email ${sent.email}. Send them this link yourself:`}
+            {t(sent.emailSent ? "share.emailed" : "share.notEmailed", { email: sent.email })}
           </Alert>
           <CopyLink link={sent.link} />
         </div>
       )}
 
-      <span className="share-section-title">People · {members.length}</span>
+      <span className="share-section-title">{t("share.people", { count: members.length })}</span>
       <ul className="people">
         {members.map((m) => {
           const me = m.sub === mySub;
           let action = null;
           if (isOwner && !me && m.role !== "owner") {
             action = {
-              label: "Remove",
-              confirm: `Remove ${m.email}? They'll lose access right away.`,
+              label: t("share.remove"),
+              confirm: t("share.removeConfirm", { email: m.email }),
               run: async () => {
                 await removeMember(list.id, m.sub);
                 onMemberRemoved(m.sub);
@@ -88,8 +88,8 @@ export default function ShareSheet({ list, members, invites, mySub, onInvited, o
             <PersonRow
               key={m.sub}
               email={m.email}
-              title={me ? "You" : undefined}
-              tag={m.role === "owner" ? "Owner" : "Editor"}
+              title={me ? t("share.you") : undefined}
+              tag={m.role === "owner" ? t("share.owner") : t("share.editor")}
               action={action}
             />
           );
@@ -98,19 +98,19 @@ export default function ShareSheet({ list, members, invites, mySub, onInvited, o
 
       {isOwner && pending.length > 0 && (
         <>
-          <span className="share-section-title">Pending · {pending.length}</span>
+          <span className="share-section-title">{t("share.pending", { count: pending.length })}</span>
           <ul className="people">
             {pending.map((inv) => (
               <PersonRow
                 key={inv.email}
                 email={inv.email}
                 title={inv.email}
-                detail={`Invited · expires in ${timeLeft(inv.expiresAt)}`}
-                tag="Pending"
+                detail={t("share.invitedExpires", { time: timeLeft(inv.expiresAt) })}
+                tag={t("share.pendingTag")}
                 tagKind="wait"
                 action={{
-                  label: "Cancel invite",
-                  confirm: `Cancel the invite to ${inv.email}? The link stops working.`,
+                  label: t("share.cancelInvite"),
+                  confirm: t("share.cancelInviteConfirm", { email: inv.email }),
                   run: async () => {
                     await deleteInvite(list.id, inv.email);
                     onInviteCancelled(inv.email);
@@ -126,11 +126,11 @@ export default function ShareSheet({ list, members, invites, mySub, onInvited, o
         <ul className="people">
           <PersonRow
             email={members.find((m) => m.sub === mySub)?.email}
-            title="Leave this list"
-            detail="You'll stop seeing it. The owner can invite you again."
+            title={t("share.leaveTitle")}
+            detail={t("share.leaveDetail")}
             action={{
-              label: "Leave",
-              confirm: `Leave “${list.name}”?`,
+              label: t("share.leave"),
+              confirm: t("share.leaveConfirm", { name: list.name }),
               run: async () => {
                 await removeMember(list.id, mySub);
                 onLeft();

@@ -1,18 +1,10 @@
 import { useEffect, useState } from "react";
 
 import "./InstallHint.css";
+import { t } from "../i18n/i18n.js";
+import { isInstalled, isIOS } from "../lib/device.js";
 
 const DISMISSED = "shoptogether.installHintDismissed";
-
-function isInstalled() {
-  return window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
-}
-
-function isIOS() {
-  const ua = navigator.userAgent || "";
-  // iPadOS reports itself as a Mac, so also check for touch.
-  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-}
 
 function wasDismissed() {
   try {
@@ -61,26 +53,26 @@ export default function InstallHint() {
     <div className="install-hint" role="note">
       <img src="/apple-touch-icon.png" alt="" className="install-hint-icon" />
       <div className="install-hint-text">
-        <b>Get the app</b>
+        <b>{t("install.title")}</b>
         {prompt ? (
-          <span>Install ShopTogether on your Home Screen for quick access.</span>
+          <span>{t("install.android")}</span>
         ) : (
           <span>
-            Tap <ShareIcon /> <b>Share</b>, then <b>Add to Home Screen</b>.
+            {t("install.iosBefore")} <ShareIcon /> <b>{t("install.iosShare")}</b>{t("install.iosThen")} <b>{t("install.iosAdd")}</b>.
           </span>
         )}
       </div>
       {prompt ? (
-        <button className="install-hint-action" type="button" onClick={install}>Install</button>
+        <button className="install-hint-action" type="button" onClick={install}>{t("install.button")}</button>
       ) : null}
-      <button className="install-hint-close" type="button" aria-label="Dismiss" onClick={dismiss}>×</button>
+      <button className="install-hint-close" type="button" aria-label={t("common.dismiss")} onClick={dismiss}>×</button>
     </div>
   );
 }
 
 function ShareIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="15" height="15" aria-label="Share icon" style={{ verticalAlign: "-2px" }} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style={{ verticalAlign: "-2px" }} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 3v12M7.5 7.5L12 3l4.5 4.5" />
       <path d="M6 11H5v9h14v-9h-1" />
     </svg>

@@ -18,6 +18,7 @@
   color: var(--accent); text-decoration: none;
 }
 .nav-back span { font-size: 1.9rem; line-height: 1; margin-top: -4px; }
+[dir="rtl"] .nav-back span { transform: scaleX(-1); } /* the back arrow points right in Hebrew */
 .nav-compact-title {
   font-size: 1.0625rem; font-weight: 600; max-width: 50vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   opacity: 0; transition: opacity 0.15s ease;

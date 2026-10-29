@@ -30,3 +30,6 @@ infrastructure/cdk.out/
 
 # CDK deploy outputs
 infrastructure/outputs.json
+
+# Web Push signing key (private) — goes into SSM, never into git
+infrastructure/vapid.local.json

@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
+import { t } from "../i18n/i18n.js";
+import { parseItem } from "../lib/parseItem.js";
 import "./ItemRow.css";
 
 /**
  * The empty row that "New Item" opens at the end of the list. Return adds the item and
  * leaves a fresh empty row ready for the next one; Return on an empty row (or Esc) closes it.
+ * An amount can be typed in the same field: "Milk x2", "2 Milk", "1 kg tomatoes".
  */
 export default function NewItemRow({ onAdd, onClose }) {
   const [text, setText] = useState("");
@@ -25,7 +28,7 @@ export default function NewItemRow({ onAdd, onClose }) {
     if (event.key === "Enter") {
       event.preventDefault();
       if (!text.trim()) return close();
-      onAdd({ text: text.trim() });
+      onAdd(parseItem(text));
       setText("");
     } else if (event.key === "Escape") {
       event.preventDefault();
@@ -34,7 +37,7 @@ export default function NewItemRow({ onAdd, onClose }) {
   }
 
   function onBlur() {
-    if (text.trim()) onAdd({ text: text.trim() });
+    if (text.trim()) onAdd(parseItem(text));
     close();
   }
 
@@ -46,9 +49,10 @@ export default function NewItemRow({ onAdd, onClose }) {
           ref={inputRef}
           id="new-item"
           className="item-input"
-          aria-label="New item"
+          aria-label={t("list.newItemLabel")}
+          dir="auto"
           value={text}
-          maxLength={200}
+          maxLength={230}
           enterKeyHint="next"
           autoComplete="off"
           onChange={(e) => setText(e.target.value)}

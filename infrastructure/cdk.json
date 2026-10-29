@@ -1,17 +1,28 @@
 {
   "app": "python3 app.py",
   "watch": {
-    "include": ["**"],
-    "exclude": ["README.md", "cdk*.json", "requirements*.txt", "**/__init__.py", "**/__pycache__"]
+    "include": [
+      "**"
+    ],
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "requirements*.txt",
+      "**/__init__.py",
+      "**/__pycache__"
+    ]
   },
   "context": {
     "stage": "dev",
     "appUrl": "https://d3tmlil1c87zn8.cloudfront.net",
     "senderEmail": "",
     "hosting": true,
+    "vapidPublicKey": "BHjPZ8BHz5CJcsBtn_AWVcIc8t9eFRUWz_sMBfaW7IfaHq20plo-34OJjzwmgK6BOPZ32SG_8Ycqn9zZW1SbrGs",
     "@aws-cdk/aws-apigateway:disableCloudWatchRole": true,
     "@aws-cdk/core:checkSecretUsage": true,
-    "@aws-cdk/core:target-partitions": ["aws"],
+    "@aws-cdk/core:target-partitions": [
+      "aws"
+    ],
     "@aws-cdk/aws-iam:minimizePolicies": true,
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/aws-s3:createDefaultLoggingPolicy": true,

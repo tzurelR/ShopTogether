@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import { isRtl, t } from "../i18n/i18n.js";
+import { formatItem, parseItem } from "../lib/parseItem.js";
 import "./ItemRow.css";
 
 const ACTION_WIDTH = 88; // the red Delete button revealed by a swipe
@@ -7,11 +9,11 @@ const FULL_SWIPE = ACTION_WIDTH * 2.2; // swipe this far and let go = delete str
 const START_SWIPE = 10; // px of sideways movement before a touch counts as a swipe
 
 // One item, Reminders-style: round check, title (tap to edit: Return saves, Esc cancels),
-// qty as a note, and swipe left to delete.
+// amount as a badge, and swipe toward the start edge to delete (left in English, right in Hebrew).
 export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelete }) {
   const pending = item.id.startsWith("tmp-");
   const [editing, setEditing] = useState(false);
-  const [text, setText] = useState(item.text);
+  const [text, setText] = useState(formatItem(item));
   const [offset, setOffset] = useState(0); // 0 = closed, -ACTION_WIDTH = Delete showing
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef(null);
@@ -41,7 +43,7 @@ export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelet
       setOffset(0);
       return;
     }
-    setText(item.text);
+    setText(formatItem(item));
     finished.current = false;
     setEditing(true);
   }
@@ -50,7 +52,13 @@ export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelet
     if (finished.current) return;
     finished.current = true;
     setEditing(false);
-    if (save && text.trim() && text.trim() !== item.text) onEdit(item, { text: text.trim() });
+    if (!save || !text.trim()) return;
+    // One field holds name and amount ("Milk x2"); only send what changed.
+    const next = parseItem(text);
+    const changes = {};
+    if (next.text !== item.text) changes.text = next.text;
+    if ((next.qty || "") !== (item.qty || "")) changes.qty = next.qty || "";
+    if (Object.keys(changes).length) onEdit(item, changes);
   }
 
   function onKeyDown(event) {
@@ -78,7 +86,8 @@ export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelet
   function onPointerMove(event) {
     const d = drag.current;
     if (!d) return;
-    const dx = event.clientX - d.x;
+    // Measured toward the row's end edge, so the same code works left-to-right and right-to-left.
+    const dx = (event.clientX - d.x) * (isRtl() ? -1 : 1);
     const dy = event.clientY - d.y;
     if (!d.swiping) {
       if (Math.abs(dy) > START_SWIPE && Math.abs(dy) > Math.abs(dx)) {
@@ -115,12 +124,12 @@ export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelet
         tabIndex={offset === 0 ? -1 : 0}
         onClick={remove}
       >
-        Delete
+        {t("common.delete")}
       </button>
 
       <div
         className={`item-slide${dragging ? " item-slide-dragging" : ""}`}
-        style={{ transform: offset ? `translateX(${offset}px)` : undefined }}
+        style={{ transform: offset ? `translateX(${offset * (isRtl() ? -1 : 1)}px)` : undefined }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -130,7 +139,7 @@ export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelet
           type="button"
           role="checkbox"
           aria-checked={item.done}
-          aria-label={item.done ? `Uncheck ${item.text}` : `Check off ${item.text}`}
+          aria-label={t(item.done ? "item.uncheck" : "item.check", { text: item.text })}
           className="item-check"
           onClick={() => (offset ? setOffset(0) : onToggle(item))}
           disabled={pending}
@@ -142,9 +151,10 @@ export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelet
               <input
                 ref={inputRef}
                 className="item-input"
-                aria-label="Item"
+                aria-label={t("item.label")}
+                dir="auto"
                 value={text}
-                maxLength={200}
+                maxLength={230}
                 enterKeyHint="done"
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={onKeyDown}
@@ -160,13 +170,17 @@ export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelet
                 }}
                 onClick={remove}
               >
-                Delete
+                {t("common.delete")}
               </button>
             </div>
           ) : (
             <button type="button" className="item-text" onClick={startEditing} disabled={pending}>
-              <span className="item-title">{item.text}</span>
-              {item.qty && <span className="item-note">{item.qty}</span>}
+              <span className="item-title" dir="auto">{item.text}</span>
+              {item.qty && (
+                <span className="item-qty" dir="auto" aria-label={t("item.quantity", { qty: item.qty })}>
+                  {item.qty}
+                </span>
+              )}
             </button>
           )}
         </div>

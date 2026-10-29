@@ -1,5 +1,6 @@
 import { getAccessToken } from "../auth/session.js";
 import { config } from "../config.js";
+import { currentLanguage, t } from "../i18n/i18n.js";
 
 export class ApiError extends Error {
   constructor(status, code, message) {
@@ -34,20 +35,25 @@ export async function request(method, path, body) {
   } catch (err) {
     if (err instanceof ApiError) throw err;
     if (err?.code === "NotAuthorizedException" || err?.message === "Not logged in") {
-      throw new ApiError(401, "unauthorized", "Your session has expired. Log in again.");
+      throw new ApiError(401, "unauthorized", t("error.session"));
     }
-    throw new ApiError(0, "network", "Can't reach the server. Check your connection and try again.");
+    throw new ApiError(0, "network", t("error.network"));
   }
 
   if (response.status === 204) return null;
   const data = await response.json().catch(() => null);
   if (!response.ok) {
     const error = data?.error || {};
-    throw new ApiError(
-      response.status,
-      error.code || "error",
-      error.message || (response.status === 401 ? "Your session has expired. Log in again." : "Something went wrong. Try again."),
-    );
+    const code = error.code || (response.status === 401 ? "unauthorized" : "error");
+    throw new ApiError(response.status, code, localize(code, error.message));
   }
   return data;
+}
+
+// The API writes its messages in English. Other languages get a message for the error code.
+function localize(code, apiMessage) {
+  if (currentLanguage() === "en" && apiMessage) return apiMessage;
+  const key = `error.${code}`;
+  const text = t(key);
+  return text === key ? apiMessage || t("error.generic") : text;
 }

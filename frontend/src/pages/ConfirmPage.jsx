@@ -9,6 +9,7 @@ import { useAuth } from "../auth/useAuth.js";
 import Alert from "../components/Alert.jsx";
 import AuthLayout from "../components/AuthLayout.jsx";
 import TextField from "../components/TextField.jsx";
+import { t } from "../i18n/i18n.js";
 
 export default function ConfirmPage() {
   const { logIn } = useAuth();
@@ -35,7 +36,7 @@ export default function ConfirmPage() {
     } catch (err) {
       if (err.code === "ExpiredCodeException") {
         await resendCode(address).catch(() => {});
-        setError("That code has expired. We sent a new one.");
+        setError(t("confirm.expiredResent"));
       } else {
         setError(errorMessage(err));
       }
@@ -55,7 +56,7 @@ export default function ConfirmPage() {
     const nextParam = next ? `&next=${encodeURIComponent(next)}` : "";
     navigate(`/login?email=${encodeURIComponent(address)}${nextParam}`, {
       replace: true,
-      state: { message: "Your email is confirmed. Log in to continue." },
+      state: { message: t("confirm.done") },
     });
   }
 
@@ -64,7 +65,7 @@ export default function ConfirmPage() {
     setInfo("");
     try {
       await resendCode(email.trim().toLowerCase());
-      setInfo("We sent a new code. It can take a minute to arrive.");
+      setInfo(t("confirm.resent"));
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -73,17 +74,18 @@ export default function ConfirmPage() {
   const knownEmail = params.get("email");
   return (
     <AuthLayout
-      title="Check your email"
-      subtitle={knownEmail ? `We sent a 6-digit code to ${knownEmail}.` : "Enter the 6-digit code we emailed you."}
-      footer="Step 2 of 2 · sign up"
+      title={t("confirm.title")}
+      subtitle={knownEmail ? t("confirm.sentTo", { email: knownEmail }) : t("confirm.enterCode")}
+      footer={t("confirm.step")}
     >
       <Alert kind="info">{info}</Alert>
       <form className="stack" onSubmit={onSubmit}>
         {!knownEmail && (
           <TextField
             id="email"
-            label="Email"
+            label={t("auth.email")}
             type="email"
+            dir="ltr"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -92,7 +94,8 @@ export default function ConfirmPage() {
         )}
         <TextField
           id="code"
-          label="Code"
+          label={t("auth.code")}
+          dir="ltr"
           inputMode="numeric"
           autoComplete="one-time-code"
           pattern="[0-9]{6}"
@@ -103,10 +106,10 @@ export default function ConfirmPage() {
         />
         <Alert>{error}</Alert>
         <button className="btn" type="submit" disabled={busy}>
-          {busy ? "Confirming…" : "Confirm and continue"}
+          {busy ? t("confirm.busy") : t("confirm.submit")}
         </button>
         <button className="btn-link small" type="button" onClick={onResend} disabled={!email}>
-          Resend code
+          {t("confirm.resend")}
         </button>
       </form>
     </AuthLayout>

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { displayName } from "../lib/displayName.js";
 import "./PersonRow.css";
+import { t } from "../i18n/i18n.js";
 
 /**
  * A member or a pending invite in the share sheet.
@@ -29,8 +30,8 @@ export default function PersonRow({ email, title, detail, tag, tagKind, action }
       <div className="person-main">
         <span className="person-avatar" aria-hidden="true">{(email || "?").charAt(0).toUpperCase()}</span>
         <div className="person-text">
-          <span className="person-title">{title ?? displayName(email)}</span>
-          <span className="person-detail">{detail ?? email}</span>
+          <span className="person-title" dir="auto">{title ?? displayName(email)}</span>
+          <span className="person-detail" dir="auto">{detail ?? email}</span>
         </div>
         {tag && <span className={`tag${tagKind ? ` tag-${tagKind}` : ""}`}>{tag}</span>}
         {action && !confirming && (
@@ -42,9 +43,9 @@ export default function PersonRow({ email, title, detail, tag, tagKind, action }
       {confirming && (
         <div className="person-confirm">
           <span className="small">{action.confirm}</span>
-          <button className="btn-link small" type="button" onClick={() => setConfirming(false)} disabled={busy}>Cancel</button>
+          <button className="btn-link small" type="button" onClick={() => setConfirming(false)} disabled={busy}>{t("common.cancel")}</button>
           <button className="btn-link small person-danger" type="button" onClick={run} disabled={busy}>
-            {busy ? "Working…" : action.label}
+            {busy ? t("common.working") : action.label}
           </button>
         </div>
       )}

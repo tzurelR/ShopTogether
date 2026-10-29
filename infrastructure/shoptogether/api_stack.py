@@ -10,7 +10,7 @@ from aws_cdk import aws_iam as iam
 from constructs import Construct
 
 from .config import Config
-from .lambdas import python_function
+from .lambdas import PUSH_SENDER_DIR, node_function, python_function
 
 # Caps the bill if a client or a bug loops.
 THROTTLE = apigw.ThrottleSettings(rate_limit=20, burst_limit=50)
@@ -29,6 +29,8 @@ HTTP_ROUTES: list[tuple[apigw.HttpMethod, str]] = [
     (apigw.HttpMethod.GET, "/invites/{token}"),
     (apigw.HttpMethod.POST, "/invites/{token}/accept"),
     (apigw.HttpMethod.DELETE, "/lists/{listId}/members/{sub}"),
+    (apigw.HttpMethod.POST, "/push/subscriptions"),
+    (apigw.HttpMethod.DELETE, "/push/subscriptions/{id}"),
 ]
 
 WEBSOCKET_ROUTES = ["subscribe", "unsubscribe"]
@@ -82,6 +84,33 @@ class ApiStack(Stack):
                     resources=[f"arn:{self.partition}:ses:{self.region}:{self.account}:identity/*"],
                 )
             )
+
+        # ---------- Push notifications (only when a VAPID key is configured) ----------
+        if config.vapid_public_key:
+            push_fn = node_function(
+                self,
+                "PushSenderFunction",
+                config=config,
+                code_dir=PUSH_SENDER_DIR,
+                description="ShopTogether Web Push sender",
+                environment={
+                    "TABLE_NAME": table.table_name,
+                    "VAPID_PUBLIC_KEY": config.vapid_public_key,
+                    "VAPID_SUBJECT": config.vapid_subject,
+                    "VAPID_PRIVATE_KEY_PARAM": config.vapid_private_key_param,
+                },
+            )
+            table.grant_read_write_data(push_fn)  # deletes subscriptions that went stale
+            push_fn.add_to_role_policy(
+                iam.PolicyStatement(
+                    actions=["ssm:GetParameter"],
+                    resources=[
+                        f"arn:{self.partition}:ssm:{self.region}:{self.account}:parameter{config.vapid_private_key_param}"
+                    ],
+                )
+            )
+            push_fn.grant_invoke(api_fn)
+            api_fn.add_environment("PUSH_FUNCTION_NAME", push_fn.function_name)
 
         # ---------- HTTP API ----------
         http_api = apigw.HttpApi(
