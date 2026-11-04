@@ -1,54 +1,65 @@
 import { Link } from "react-router-dom";
 
-import { listColor } from "../lib/listColor.js";
-import "./ListCard.css";
 import { t } from "../i18n/i18n.js";
+import { listColor } from "../lib/listColor.js";
+import Icon from "./Icon.jsx";
+import "./ListCard.css";
 
-function ListIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-      <g fill="currentColor">
-        <circle cx="5" cy="6.5" r="1.6" />
-        <circle cx="5" cy="12" r="1.6" />
-        <circle cx="5" cy="17.5" r="1.6" />
-        <rect x="9" y="5.5" width="11" height="2" rx="1" />
-        <rect x="9" y="11" width="11" height="2" rx="1" />
-        <rect x="9" y="16.5" width="11" height="2" rx="1" />
-      </g>
-    </svg>
-  );
-}
-
-// One row on "My Lists": icon, name (+ who it's shared with), open-item count, ⋯ menu.
+// One list on "My Lists": tinted icon, name, "7 of 12 left", progress, who it's shared with, ⋯.
+// A list with everything checked off turns into a quiet dashed card ("All 9 done").
 export default function ListCard({ list, onRename, onDelete }) {
-  const left = Math.max(list.itemCount - list.doneCount, 0);
-  const others = list.memberCount - 1;
+  const total = list.itemCount;
+  const left = Math.max(total - list.doneCount, 0);
+  const others = Math.max(list.memberCount - 1, 0);
+  const allDone = total > 0 && left === 0;
+  const percent = total ? Math.round((list.doneCount / total) * 100) : 0;
+  const sharing = others > 0 ? t("lists.sharedWith", { count: others }) : t("lists.onlyYou");
 
   function pick(event, action) {
     event.currentTarget.closest("details").open = false;
     action(list);
   }
 
-  return (
-    <li className="list-row" style={{ "--row-color": listColor(list.id) }}>
-      <Link to={`/lists/${list.id}`} className="list-row-link">
-        <span className="list-row-icon"><ListIcon /></span>
-        <span className="list-row-text">
-          <span className="list-row-name" dir="auto">{list.name}</span>
-          {others > 0 && <span className="list-row-sub">{t("lists.sharedWith", { count: others })}</span>}
-        </span>
-        <span className="list-row-count" aria-label={t("lists.left", { count: left })}>{left}</span>
-      </Link>
+  const menu = (
+    <details className="list-card-menu" onClick={(e) => e.stopPropagation()}>
+      <summary aria-label={t("lists.options", { name: list.name })}>
+        <Icon name="more" size={18} />
+      </summary>
+      <div className="list-card-menu-items">
+        <button type="button" onClick={(e) => pick(e, onRename)}>{t("lists.rename")}</button>
+        {list.role === "owner" && (
+          <button type="button" className="danger" onClick={(e) => pick(e, onDelete)}>{t("common.delete")}</button>
+        )}
+      </div>
+    </details>
+  );
 
-      <details className="list-row-menu">
-        <summary aria-label={t("lists.options", { name: list.name })}>⋯</summary>
-        <div className="list-row-menu-items">
-          <button type="button" onClick={(e) => pick(e, onRename)}>{t("lists.rename")}</button>
-          {list.role === "owner" && (
-            <button type="button" className="danger" onClick={(e) => pick(e, onDelete)}>{t("common.delete")}</button>
-          )}
+  return (
+    <li className={`list-card${allDone ? " list-card-done" : ""}`} style={{ "--accent": listColor(list.id) }}>
+      <Link to={`/lists/${list.id}`} className="list-card-link">
+        <div className="list-card-top">
+          <span className="list-card-icon" aria-hidden="true">
+            <Icon name={allDone ? "check" : "cart"} size={22} />
+          </span>
+          <span className="list-card-text">
+            <span className="list-card-name" dir="auto">{list.name}</span>
+            <span className="list-card-sub">
+              {allDone ? t("lists.allDoneCard", { count: total, sharing }) : total ? t("lists.ofLeft", { left, total }) : t("list.noItems")}
+            </span>
+          </span>
+          <Icon name="chevronRight" size={20} className="list-card-chevron" />
         </div>
-      </details>
+        {!allDone && (
+          <>
+            <div className="progress" aria-hidden="true"><i style={{ width: `${percent}%` }} /></div>
+            <div className="list-card-foot">
+              {others === 0 && <Icon name="lock" size={16} />}
+              <span>{sharing}</span>
+            </div>
+          </>
+        )}
+      </Link>
+      {menu}
     </li>
   );
 }

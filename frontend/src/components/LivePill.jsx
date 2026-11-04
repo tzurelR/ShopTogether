@@ -1,8 +1,9 @@
+import { avatarColor, initial } from "../lib/avatarColor.js";
 import { displayName } from "../lib/displayName.js";
-import "./LivePill.css";
 import { t } from "../i18n/i18n.js";
+import "./LivePill.css";
 
-// "Dana here" / "Dana and 2 others here", or the connection state when not live.
+// "(D) ● Dana here" — or the connection state when not live.
 export default function LivePill({ status, present, mySub }) {
   if (status !== "live") {
     return <span className="live-pill live-pill-off">{status === "offline" ? t("live.reconnecting") : t("live.connecting")}</span>;
@@ -13,6 +14,10 @@ export default function LivePill({ status, present, mySub }) {
   const label = others.length === 1 ? t("live.here", { name: first }) : t("live.hereMore", { name: first, count: others.length - 1 });
   return (
     <span className="live-pill" title={others.map((p) => p.email).join(", ")}>
+      <span className="avatar live-pill-avatar" style={{ "--avatar": avatarColor(others[0].email) }} aria-hidden="true">
+        {initial(others[0].email)}
+      </span>
+      <span className="live-dot" aria-hidden="true" />
       {label}
     </span>
   );

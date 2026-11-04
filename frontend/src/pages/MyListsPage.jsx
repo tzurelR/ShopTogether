@@ -9,13 +9,13 @@ import { onAppResume } from "../lib/onAppResume.js";
 import AccountMenu from "../components/AccountMenu.jsx";
 import Alert from "../components/Alert.jsx";
 import AppBar from "../components/AppBar.jsx";
-import BottomBar from "../components/BottomBar.jsx";
+import Icon from "../components/Icon.jsx";
 import ConfirmDelete from "../components/ConfirmDelete.jsx";
 import ListCard from "../components/ListCard.jsx";
 import ListNameForm from "../components/ListNameForm.jsx";
 import InstallHint from "../components/InstallHint.jsx";
 import Sheet from "../components/Sheet.jsx";
-import { t } from "../i18n/i18n.js";
+import { currentLanguage, t } from "../i18n/i18n.js";
 
 // "8 items left in 3 lists" under the title.
 function summary(lists) {
@@ -24,6 +24,19 @@ function summary(lists) {
   const count = t("lists.count", { count: lists.length });
   if (left === 0) return t("lists.summaryDone", { lists: count });
   return t("lists.summary", { count: left, lists: count });
+}
+
+// "Wednesday, 4 November" in the app's language.
+function today() {
+  try {
+    const locale = currentLanguage() === "he" ? "he-IL" : "en-GB";
+    const now = new Date();
+    const weekday = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(now);
+    const date = new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(now);
+    return `${weekday}, ${date}`;
+  } catch {
+    return "";
+  }
 }
 
 export default function MyListsPage() {
@@ -71,7 +84,7 @@ export default function MyListsPage() {
 
   return (
     <main className="page">
-      <AppBar title={t("lists.title")} subtitle={summary(lists)}>
+      <AppBar variant="home" eyebrow={today()} title={t("lists.title")} subtitle={summary(lists)}>
         <AccountMenu />
       </AppBar>
 
@@ -89,7 +102,7 @@ export default function MyListsPage() {
 
       {lists?.length === 0 && !error && (
         <div className="empty">
-          <div className="empty-icon" aria-hidden="true">✓</div>
+          <div className="empty-icon" aria-hidden="true"><Icon name="cart" size={26} /></div>
           <p className="empty-title">{t("lists.emptyTitle")}</p>
           <p className="muted">{t("lists.emptyBody")}</p>
         </div>
@@ -108,13 +121,11 @@ export default function MyListsPage() {
         </ul>
       )}
 
-      <BottomBar
-        right={
-          <button className="toolbar-button" type="button" onClick={() => setSheet({ kind: "create" })}>
-            {t("lists.add")}
-          </button>
-        }
-      />
+      <div className="fab-fade" aria-hidden="true" />
+      <button className="fab" type="button" onClick={() => setSheet({ kind: "create" })}>
+        <Icon name="plus" size={22} />
+        {t("lists.newList")}
+      </button>
 
       <Sheet open={sheet?.kind === "create"} title={t("lists.new")} onClose={close}>
         <ListNameForm submitLabel={t("lists.create")} busyLabel={t("lists.creating")} onSubmit={handleCreate} onCancel={close} />

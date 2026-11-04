@@ -1,14 +1,53 @@
-.people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.person { display: flex; flex-direction: column; gap: 6px; }
-.person-main { display: flex; align-items: center; gap: 10px; }
-.person-avatar {
-  flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
-  font-size: 0.8rem; font-weight: 600; background: var(--accent-soft); color: var(--accent);
+.people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.people > .person + .person { border-top: 1px solid var(--line-soft); }
+.person { display: flex; flex-direction: column; gap: 10px; padding-block: 10px; }
+.person-main { display: flex; align-items: center; gap: 12px; min-height: 36px; }
+.person-avatar { position: relative; width: 36px; height: 36px; font-size: 15px; }
+.person-avatar-me { --avatar: var(--fg); color: var(--bg); }
+.person-online-dot {
+  position: absolute; inset-inline-end: -1px; bottom: -1px; width: 11px; height: 11px; border-radius: 999px;
+  background: var(--online); border: 2px solid var(--surface);
+}
+.person-avatar-pending {
+  flex: none; width: 36px; height: 36px; border-radius: 999px; border: 1.5px dashed var(--faint);
+  display: grid; place-items: center; color: var(--muted);
 }
 .person-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.person-title { font-weight: 600; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.person-detail { font-size: 0.78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.person-confirm { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-inline-start: 42px; }
-.person-danger { color: var(--live); }
-.tag-wait { background: var(--amber-soft); color: var(--amber); }
-.share-section-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.person-title { font-size: 16px; line-height: 21px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person-detail { font-size: 13px; line-height: 18px; color: var(--muted); }
+.person-online { color: var(--brand-text); }
+.person-pending { color: var(--flash-text); }
+.person-menu {
+  flex: none; width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent;
+  display: grid; place-items: center; color: var(--muted);
+}
+.person-text-action { flex: none; height: 36px; padding: 0 10px; border: 0; background: transparent; font-size: 15px; font-weight: 500; color: var(--danger); }
+.person-confirm { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 16px; background: var(--bg); }
+.person-confirm-text { font-size: 15px; line-height: 20px; }
+.person-confirm-actions { display: flex; gap: 8px; }
+.person-confirm-actions .btn { flex: 1; min-height: 44px; font-size: 15px; }
+.person-error { font-size: 13px; color: var(--danger); }
+.share-section-title { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+
+/* Invite */
+.invite-row { display: flex; gap: 8px; }
+.invite-row .input { flex: 1; min-width: 0; height: 50px; }
+.invite-row .btn { min-height: 50px; padding: 0 18px; border-radius: 14px; font-size: 16px; background: var(--brand); color: var(--brand-ink); }
+.invite-link {
+  display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 16px; background: var(--bg);
+}
+.invite-link-top { display: flex; align-items: center; gap: 12px; }
+.invite-link-icon {
+  flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--brand-soft); color: var(--brand);
+}
+.invite-link-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.invite-link-title { font-size: 15px; line-height: 20px; font-weight: 600; }
+.invite-link-sub { font-size: 13px; line-height: 18px; color: var(--muted); }
+.invite-link .copy-link-button {
+  flex: none; height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line-strong);
+  background: var(--surface); font-size: 15px; font-weight: 600;
+}
+.invite-link .copy-link-text {
+  width: 100%; border: 0; background: transparent; font-size: 13px; color: var(--muted); padding: 0; outline: none;
+}

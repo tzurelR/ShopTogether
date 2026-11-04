@@ -1,25 +1,20 @@
 import { useState } from "react";
 
-import "./PasswordField.css";
 import { t } from "../i18n/i18n.js";
+import Icon from "./Icon.jsx";
+import "./PasswordField.css";
 
-function EyeIcon({ open }) {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
-      <circle cx="12" cy="12" r="3" />
-      {!open && <path d="M4 4l16 16" />}
-    </svg>
-  );
-}
-
-// Password input with a show/hide button inside the field.
-export default function PasswordField({ id, label, hint, ...inputProps }) {
+// Password input with a show/hide button inside the field. `aside` sits on the label row
+// (the "Forgot password?" link on the login page).
+export default function PasswordField({ id, label, hint, aside, ...inputProps }) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div className="field">
-      <label htmlFor={id}>{label}</label>
+      <div className="field-head">
+        <label htmlFor={id}>{label}</label>
+        {aside}
+      </div>
       <div className="password-wrap">
         <input
           id={id}
@@ -42,7 +37,7 @@ export default function PasswordField({ id, label, hint, ...inputProps }) {
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setVisible((v) => !v)}
         >
-          <EyeIcon open={visible} />
+          <Icon name={visible ? "eyeOff" : "eye"} size={20} />
         </button>
       </div>
       {hint && <span className="field-hint">{hint}</span>}

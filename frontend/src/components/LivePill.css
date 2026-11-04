@@ -1,13 +1,10 @@
 .live-pill {
   display: inline-flex; align-items: center; gap: 6px; flex: none;
-  font-size: 0.8125rem; font-weight: 600; padding: 3px 9px; border-radius: 999px;
-  color: var(--live); background: var(--live-soft);
+  padding-block: 3px; padding-inline: 3px 10px; border-radius: 999px;
+  background: var(--brand-soft); color: var(--brand-text); font-size: 13px; line-height: 18px; font-weight: 500;
 }
-.live-pill::before {
-  content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor;
-  animation: live-pulse 1.6s ease-in-out infinite;
-}
-.live-pill-off { color: var(--muted); background: var(--sunk); }
-.live-pill-off::before { animation: none; }
-@keyframes live-pulse { 50% { opacity: 0.25; } }
-@media (prefers-reduced-motion: reduce) { .live-pill::before { animation: none; } }
+.live-pill-avatar { width: 22px; height: 22px; font-size: 11px; }
+.live-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--online); animation: live-pulse 1.8s ease-in-out infinite; }
+.live-pill-off { padding-inline: 10px; background: var(--amber-soft); color: var(--flash-text); }
+@keyframes live-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }

@@ -2,15 +2,20 @@ import { useEffect, useRef, useState } from "react";
 
 import { isRtl, t } from "../i18n/i18n.js";
 import { formatItem, parseItem } from "../lib/parseItem.js";
+import Icon from "./Icon.jsx";
 import "./ItemRow.css";
 
 const ACTION_WIDTH = 88; // the red Delete button revealed by a swipe
 const FULL_SWIPE = ACTION_WIDTH * 2.2; // swipe this far and let go = delete straight away
 const START_SWIPE = 10; // px of sideways movement before a touch counts as a swipe
 
-// One item, Reminders-style: round check, title (tap to edit: Return saves, Esc cancels),
-// amount as a badge, and swipe toward the start edge to delete (left in English, right in Hebrew).
-export default function ItemRow({ item, flash = false, lifted = null, onToggle, onEdit, onDelete, onDragStart, onDragMove, onDragEnd }) {
+// Plain numbers read as "×2"; amounts with units ("1 kg") show as typed.
+const formatQty = (qty) => (/^\d+(?:[.,]\d+)?$/.test(qty) ? `×${qty}` : qty);
+
+// One item: round check, title (tap to edit: Return saves, Esc cancels), amount pill, ⋮⋮ handle,
+// and swipe toward the start edge to delete (left in English, right in Hebrew).
+// `note` ("Dana added · just now") shows under the title while the row is highlighted.
+export default function ItemRow({ item, flash = false, note = "", lifted = null, onToggle, onEdit, onDelete, onDragStart, onDragMove, onDragEnd }) {
   const pending = item.id.startsWith("tmp-");
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(formatItem(item));
@@ -113,7 +118,7 @@ export default function ItemRow({ item, flash = false, lifted = null, onToggle, 
     else setOffset(offset < -ACTION_WIDTH / 2 ? -ACTION_WIDTH : 0);
   }
 
-  const classes = ["item", item.done && "item-done", pending && "item-pending", flash && "item-flash", lifted != null && "item-lifted"];
+  const classes = ["item", item.done && "item-done", pending && "item-pending", (flash || note) && "item-flash", lifted != null && "item-lifted"];
   return (
     <li
       className={classes.filter(Boolean).join(" ")}
@@ -129,6 +134,7 @@ export default function ItemRow({ item, flash = false, lifted = null, onToggle, 
         tabIndex={offset === 0 ? -1 : 0}
         onClick={remove}
       >
+        <Icon name="trash" size={18} />
         {t("common.delete")}
       </button>
 
@@ -148,7 +154,9 @@ export default function ItemRow({ item, flash = false, lifted = null, onToggle, 
           className="item-check"
           onClick={() => (offset ? setOffset(0) : onToggle(item))}
           disabled={pending}
-        />
+        >
+          {item.done && <Icon name="checkBold" size={16} />}
+        </button>
 
         <div className="item-body" onBlur={editing ? onBlur : undefined}>
           {editing ? (
@@ -180,10 +188,13 @@ export default function ItemRow({ item, flash = false, lifted = null, onToggle, 
             </div>
           ) : (
             <button type="button" className="item-text" onClick={startEditing} disabled={pending}>
-              <span className="item-title" dir="auto">{item.text}</span>
+              <span className="item-lines">
+                <span className="item-title" dir="auto">{item.text}</span>
+                {note && <span className="item-note">{note}</span>}
+              </span>
               {item.qty && (
                 <span className="item-qty" dir="auto" aria-label={t("item.quantity", { qty: item.qty })}>
-                  {item.qty}
+                  {formatQty(item.qty)}
                 </span>
               )}
             </button>
@@ -205,13 +216,7 @@ export default function ItemRow({ item, flash = false, lifted = null, onToggle, 
               onPointerUp={(e) => onDragEnd?.(e)}
               onPointerCancel={(e) => onDragEnd?.(e, { cancelled: true })}
             >
-              <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-                <g fill="currentColor">
-                  <rect x="3" y="5" width="14" height="1.8" rx="0.9" />
-                  <rect x="3" y="9.1" width="14" height="1.8" rx="0.9" />
-                  <rect x="3" y="13.2" width="14" height="1.8" rx="0.9" />
-                </g>
-              </svg>
+              <Icon name="grip" size={18} />
             </span>
           )}
         </div>

@@ -13,14 +13,14 @@ import { updateItem } from "../api/updateItem.js";
 import { useAuth } from "../auth/useAuth.js";
 import Alert from "../components/Alert.jsx";
 import AppBar from "../components/AppBar.jsx";
-import BottomBar from "../components/BottomBar.jsx";
 import CategoryHeader from "../components/CategoryHeader.jsx";
+import Composer from "../components/Composer.jsx";
 import ConfirmDelete from "../components/ConfirmDelete.jsx";
+import Icon from "../components/Icon.jsx";
 import ItemRow from "../components/ItemRow.jsx";
 import ListMenu from "../components/ListMenu.jsx";
 import ListNameForm from "../components/ListNameForm.jsx";
 import LivePill from "../components/LivePill.jsx";
-import NewItemRow from "../components/NewItemRow.jsx";
 import ShareSheet from "../components/ShareSheet.jsx";
 import Sheet from "../components/Sheet.jsx";
 import Toast from "../components/Toast.jsx";
@@ -34,7 +34,7 @@ import { t } from "../i18n/i18n.js";
 
 let tempCounter = 0;
 
-const FLASH_MS = 1500;
+const FLASH_MS = 3000; // how long "Dana added · just now" stays on a row
 // A checked item stays in place this long before it moves to Completed (like Reminders).
 const LINGER_MS = 1200;
 // While dragging near the top or bottom edge, the page scrolls by this much per frame.
@@ -57,7 +57,7 @@ export default function ListPage() {
   const [drag, setDrag] = useState(null); // { id, offset, target: { group, index }, lineTop }
   const [showCompleted, setShowCompleted] = useState(false);
   const [lingering, setLingering] = useState({}); // itemId -> true right after you check it
-  const [flashing, setFlashing] = useState({}); // itemId -> true while highlighted
+  const [flashing, setFlashing] = useState({}); // itemId -> note ("Dana added · just now") while highlighted
   const [toast, setToast] = useState("");
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -87,8 +87,8 @@ export default function ListPage() {
 
   // ---------- live updates from other people ----------
 
-  const flash = useCallback((id) => {
-    setFlashing((current) => ({ ...current, [id]: true }));
+  const flash = useCallback((id, note = "") => {
+    setFlashing((current) => ({ ...current, [id]: note || true }));
     setTimeout(() => setFlashing(({ [id]: _, ...rest }) => rest), FLASH_MS);
   }, []);
 
@@ -170,11 +170,16 @@ export default function ListPage() {
         return;
     }
     if (mine) return;
-    if (event.type === "item.created" || event.type === "item.updated") flash(event.item.id);
+    const whoName = displayName(nameOf(event.by));
+    if (event.type === "item.created") flash(event.item.id, t("item.noteAdded", { who: whoName }));
+    if (event.type === "item.updated") {
+      const checked = previousItem && !previousItem.done && event.item.done;
+      flash(event.item.id, t(checked ? "item.noteChecked" : "item.noteEdited", { who: whoName }));
+    }
     // Someone else checked it off: leave it in place briefly so you see it happen.
     if (event.type === "item.updated" && previousItem && !previousItem.done && event.item.done) linger(event.item.id);
     const text = describeEvent(event, { nameOf, previousItem });
-    if (text) setToast(text);
+    if (text) setToast({ text, from: nameOf(event.by) }); // avatar only when we know who it was
   }
 
   const { status: liveStatus, present } = useListSocket(listId, {
@@ -415,44 +420,36 @@ export default function ListPage() {
   const rowProps = { onToggle: toggle, onEdit: changeItem, onDelete: removeItem };
   const dragProps = { onDragStart: startDrag, onDragMove: moveDrag, onDragEnd: endDrag };
   const startAdding = (group = "") => setAdding({ group });
-  const newItemRow = (group) =>
-    adding?.group === group && (
-      <NewItemRow
-        key={`new-${group}`}
-        onAdd={(fields) => addItem(group ? { ...fields, categoryId: group } : fields)}
-        onClose={() => setAdding(null)}
-      />
-    );
   const renderRow = (item) => (
     <ItemRow
       key={item.id}
       item={item}
       flash={!!flashing[item.id]}
+      note={typeof flashing[item.id] === "string" ? flashing[item.id] : ""}
       lifted={drag?.id === item.id ? drag.offset : null}
       {...rowProps}
       {...dragProps}
     />
   );
+  const groupClass = (group) => `items${adding?.group === group ? " items-target" : ""}`;
 
   const left = items.filter((i) => !i.done).length;
+  const doneCount = items.length - left;
   const showEmpty = open.length === 0 && !adding && categories.length === 0;
   return (
     // The list's color tints the title, checks and buttons, like Reminders.
     <main className="page" style={{ "--accent": listColor(listId) }}>
       <AppBar
         title={list?.name ?? ""}
-        subtitle={status === "ready" ? (left ? t("lists.left", { count: left }) : t("list.allDone")) : null}
+        subtitle={status === "ready" ? (items.length ? t("list.leftDone", { left, done: doneCount }) : t("list.noItems")) : null}
+        progress={status === "ready" && items.length ? (doneCount / items.length) * 100 : null}
         back="/"
         backLabel={t("list.back")}
         meta={status === "ready" ? <LivePill status={liveStatus} present={present} mySub={user?.sub} /> : null}
       >
         {status === "ready" && (
-          <button className="nav-icon" type="button" aria-label={t("list.share")} title={t("list.share")} onClick={() => setSharing(true)}>
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="8" r="3.5" />
-              <path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5" />
-              <path d="M19 8v6M16 11h6" />
-            </svg>
+          <button className="nav-round" type="button" aria-label={t("list.share")} title={t("list.share")} onClick={() => setSharing(true)}>
+            <Icon name="share" size={20} />
           </button>
         )}
         {status === "ready" && (
@@ -483,7 +480,7 @@ export default function ListPage() {
         <>
           {showEmpty && (
             <div className="empty">
-              <div className="empty-icon" aria-hidden="true">{done.length ? "✓" : "+"}</div>
+              <div className="empty-icon" aria-hidden="true"><Icon name={done.length ? "check" : "cart"} size={26} /></div>
               <p className="empty-title">{done.length ? t("list.allDone") : t("list.emptyTitle")}</p>
               <p className="muted">{done.length ? t("list.allDoneBody") : t("list.emptyBody")}</p>
             </div>
@@ -492,17 +489,12 @@ export default function ListPage() {
           {!showEmpty && (
             <div ref={dropRef} className={`drop-wrap${drag ? " dragging-list" : ""}`}>
               {/* Items without a category come first, like Reminders. */}
-              {(uncategorized.length > 0 || adding?.group === "" || (drag && categories.length > 0)) && (
+              {(uncategorized.length > 0 || (drag && categories.length > 0)) && (
                 <section data-group="">
-                  {uncategorized.length === 0 && adding?.group !== "" && drag && (
+                  {uncategorized.length === 0 && drag && (
                     <div className="drop-zone">{t("category.dropHere")}</div>
                   )}
-                  {(uncategorized.length > 0 || adding?.group === "") && (
-                    <ul className="items">
-                      {uncategorized.map(renderRow)}
-                      {newItemRow("")}
-                    </ul>
-                  )}
+                  {uncategorized.length > 0 && <ul className={groupClass("")}>{uncategorized.map(renderRow)}</ul>}
                 </section>
               )}
 
@@ -517,12 +509,7 @@ export default function ListPage() {
                       onRename={(c) => setCategorySheet({ kind: "rename", category: c })}
                       onDelete={(c) => setCategorySheet({ kind: "delete", category: c })}
                     />
-                    {(rows.length > 0 || adding?.group === category.id) && (
-                      <ul className="items">
-                        {rows.map(renderRow)}
-                        {newItemRow(category.id)}
-                      </ul>
-                    )}
+                    {rows.length > 0 && <ul className={groupClass(category.id)}>{rows.map(renderRow)}</ul>}
                   </section>
                 );
               })}
@@ -533,15 +520,13 @@ export default function ListPage() {
 
           {done.length > 0 && (
             <>
-              <div className="completed-header">
-                <span>{t("list.completed", { count: done.length })}</span>
-                <button type="button" onClick={() => setShowCompleted((v) => !v)}>
-                  {showCompleted ? t("list.hide") : t("list.show")}
-                </button>
-              </div>
+              <button type="button" className="completed-row" aria-expanded={showCompleted} onClick={() => setShowCompleted((v) => !v)}>
+                <span className="completed-count">{t("list.completed", { count: done.length })}</span>
+                <span className="completed-toggle">{showCompleted ? t("list.hide") : t("list.show")}</span>
+              </button>
               {showCompleted && (
                 <ul className="items">
-                  {done.map((item) => <ItemRow key={item.id} item={item} flash={!!flashing[item.id]} {...rowProps} />)}
+                  {done.map((item) => <ItemRow key={item.id} item={item} flash={!!flashing[item.id]} note={typeof flashing[item.id] === "string" ? flashing[item.id] : ""} {...rowProps} />)}
                 </ul>
               )}
             </>
@@ -550,18 +535,31 @@ export default function ListPage() {
           {/* Tapping the empty space under the list starts a new item, like Reminders. */}
           <button type="button" className="tap-to-add" aria-hidden="true" tabIndex={-1} onClick={() => startAdding("")} />
 
-          <BottomBar
-            left={
-              <button className="toolbar-button" type="button" onClick={() => startAdding("")}>
-                <span className="toolbar-plus" aria-hidden="true">+</span> {t("list.newItem")}
+          {adding ? (
+            <Composer
+              categories={sortedCategories}
+              group={adding.group}
+              onGroupChange={(group) => setAdding({ group })}
+              onAdd={(fields, group) => addItem(group ? { ...fields, categoryId: group } : fields)}
+              onClose={() => setAdding(null)}
+            />
+          ) : (
+            <div className="addbar">
+              <button className="addbar-item" type="button" onClick={() => startAdding("")}>
+                <span className="addbar-plus" aria-hidden="true"><Icon name="plus" size={18} /></span>
+                {t("list.addAnItem")}
               </button>
-            }
-            right={
-              <button className="toolbar-button" type="button" onClick={() => setCategorySheet({ kind: "create" })}>
-                {t("category.add")}
+              <button
+                className="addbar-category"
+                type="button"
+                aria-label={t("category.add")}
+                title={t("category.add")}
+                onClick={() => setCategorySheet({ kind: "create" })}
+              >
+                <Icon name="folderPlus" size={22} />
               </button>
-            }
-          />
+            </div>
+          )}
         </>
       )}
       <Toast message={toast} onDone={clearToast} />
@@ -618,13 +616,14 @@ export default function ListPage() {
         />
       </Sheet>
 
-      <Sheet open={sharing && !!list} title={t("share.title")} onClose={() => setSharing(false)}>
+      <Sheet open={sharing && !!list} title={t("share.title")} subtitle={t("share.subtitle")} onClose={() => setSharing(false)}>
         {list && (
           <ShareSheet
             list={list}
             members={members}
             invites={invites}
             mySub={user?.sub}
+            present={present}
             onInvited={(invite) => setInvites((current) => [...current.filter((i) => i.email !== invite.email), invite])}
             onInviteCancelled={(email) => setInvites((current) => current.filter((i) => i.email !== email))}
             onMemberRemoved={(sub) => setMembers((current) => current.filter((m) => m.sub !== sub))}

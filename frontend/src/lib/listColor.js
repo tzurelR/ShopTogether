@@ -1,4 +1,4 @@
-// Every list gets a stable color from its ID, like Reminders' list colors.
+// Every list gets a stable color from its ID (title, checks, progress), from the design's 8.
 const COLORS = ["blue", "orange", "green", "purple", "pink", "teal", "indigo", "red"];
 
 export function listColor(listId = "") {

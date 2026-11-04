@@ -1,0 +1,62 @@
+.composer {
+  position: fixed; z-index: 25; inset-inline: 0; bottom: 0;
+  max-width: var(--column); margin-inline: auto;
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: var(--surface); border-top: 1px solid var(--line); border-radius: 24px 24px 0 0;
+  box-shadow: 0 -10px 30px -16px rgba(26, 28, 25, 0.25);
+  animation: composer-in 0.2s ease-out;
+}
+@keyframes composer-in { from { transform: translateY(24px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .composer { animation: none; } }
+
+.composer-chips {
+  display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left))); padding-inline: max(16px, env(safe-area-inset-left));
+}
+.composer-chips::-webkit-scrollbar { display: none; }
+.composer-chips-label { flex: none; font-size: 13px; color: var(--muted); }
+.chip {
+  flex: none; height: 32px; padding: 0 12px; border-radius: 999px; white-space: nowrap;
+  border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 500; color: var(--fg-2);
+}
+.chip[aria-checked="true"] {
+  border-color: var(--accent); font-weight: 600; color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.composer-row { display: flex; gap: 10px; align-items: center; }
+.composer-input {
+  flex: 1; min-width: 0; height: 52px; padding: 0 14px; border-radius: 16px;
+  border: 2px solid var(--accent); background: var(--surface); font-size: 17px; outline: none;
+}
+.composer-input::placeholder { color: var(--faint); }
+.composer-send {
+  flex: none; width: 52px; height: 52px; border-radius: 999px; border: 0;
+  background: var(--accent); color: #fff; display: grid; place-items: center;
+}
+.composer-send:disabled { opacity: 0.45; }
+.composer-tip { font-size: 12px; line-height: 16px; color: var(--muted); }
+
+/* "Add an item" bar (closed state) */
+.addbar {
+  position: fixed; z-index: 20; inset-inline: 0; bottom: 0;
+  max-width: var(--column); margin-inline: auto;
+  display: flex; gap: 10px;
+  padding: 12px max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 94%, transparent); border-top: 1px solid var(--line);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.addbar-item {
+  flex: 1; height: 52px; display: flex; align-items: center; gap: 10px; padding-inline: 10px 14px;
+  border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  font-size: 17px; cursor: text; box-shadow: var(--shadow-card);
+}
+.addbar-plus {
+  width: 30px; height: 30px; border-radius: 999px; background: var(--accent); color: #fff; display: grid; place-items: center; flex: none;
+}
+.addbar-category {
+  flex: none; width: 52px; height: 52px; border-radius: 16px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--fg); display: grid; place-items: center;
+}
+main.page:has(.addbar), main.page:has(.composer) { padding-bottom: 130px; }

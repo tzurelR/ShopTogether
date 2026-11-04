@@ -49,6 +49,7 @@ export default function LoginPage() {
   return (
     <AuthLayout
       title={t("login.title")}
+      subtitle={t("signup.subtitle")}
       footer={
         <>
           {t("login.newHere")} <Link to={withNext("/signup")}>{t("login.createAccount")}</Link>
@@ -77,14 +78,16 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          aside={
+            <Link className="auth-link" to={`/forgot?email=${encodeURIComponent(email.trim())}`}>
+              {t("login.forgot")}
+            </Link>
+          }
         />
         <Alert>{error}</Alert>
         <button className="btn" type="submit" disabled={busy}>
           {busy ? t("login.busy") : t("login.submit")}
         </button>
-        <Link className="small center auth-link" to={`/forgot?email=${encodeURIComponent(email.trim())}`}>
-          {t("login.forgot")}
-        </Link>
       </form>
     </AuthLayout>
   );

@@ -1,14 +1,16 @@
 import { useState } from "react";
 
-import { displayName } from "../lib/displayName.js";
-import "./PersonRow.css";
 import { t } from "../i18n/i18n.js";
+import Icon from "./Icon.jsx";
+import "./PersonRow.css";
 
 /**
- * A member or a pending invite in the share sheet.
- * `action` = { label, confirm, run } shows a button that asks once before running.
+ * One person (or pending invite) in the share sheet: avatar, name, a status line, and an
+ * optional action that asks once before running.
+ * `tone` colors the status line: "online" (Here now), "pending" (Invite sent · waiting).
+ * `action` = { label, confirm, run, kind: "menu" (⋯ button) | "text" (red word, e.g. Cancel) }.
  */
-export default function PersonRow({ email, title, detail, tag, tagKind, action }) {
+export default function PersonRow({ avatar, title, detail, tone, action, menuLabel }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -28,28 +30,31 @@ export default function PersonRow({ email, title, detail, tag, tagKind, action }
   return (
     <li className="person">
       <div className="person-main">
-        <span className="person-avatar" aria-hidden="true">{(email || "?").charAt(0).toUpperCase()}</span>
+        {avatar}
         <div className="person-text">
-          <span className="person-title" dir="auto">{title ?? displayName(email)}</span>
-          <span className="person-detail" dir="auto">{detail ?? email}</span>
+          <span className="person-title" dir="auto">{title}</span>
+          {detail && <span className={`person-detail${tone ? ` person-${tone}` : ""}`} dir="auto">{detail}</span>}
         </div>
-        {tag && <span className={`tag${tagKind ? ` tag-${tagKind}` : ""}`}>{tag}</span>}
-        {action && !confirming && (
-          <button className="btn-link small" type="button" onClick={() => setConfirming(true)}>
-            {action.label}
+        {action && !confirming && (action.kind === "text" ? (
+          <button className="person-text-action" type="button" onClick={() => setConfirming(true)}>{action.label}</button>
+        ) : (
+          <button className="person-menu" type="button" aria-label={menuLabel} onClick={() => setConfirming(true)}>
+            <Icon name="more" size={18} />
           </button>
-        )}
+        ))}
       </div>
       {confirming && (
         <div className="person-confirm">
-          <span className="small">{action.confirm}</span>
-          <button className="btn-link small" type="button" onClick={() => setConfirming(false)} disabled={busy}>{t("common.cancel")}</button>
-          <button className="btn-link small person-danger" type="button" onClick={run} disabled={busy}>
-            {busy ? t("common.working") : action.label}
-          </button>
+          <span className="person-confirm-text">{action.confirm}</span>
+          <div className="person-confirm-actions">
+            <button className="btn btn-ghost" type="button" onClick={() => setConfirming(false)} disabled={busy}>{t("common.cancel")}</button>
+            <button className="btn btn-danger" type="button" onClick={run} disabled={busy}>
+              {busy ? t("common.working") : action.label}
+            </button>
+          </div>
         </div>
       )}
-      {error && <span className="small person-danger">{error}</span>}
+      {error && <span className="person-error">{error}</span>}
     </li>
   );
 }

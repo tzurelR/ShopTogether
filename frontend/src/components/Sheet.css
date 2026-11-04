@@ -1,24 +1,26 @@
 .sheet {
-  border: 0; border-radius: 20px; padding: 0;
-  background: var(--bg-elevated); color: var(--fg);
-  width: min(calc(100% - 32px), 440px);
+  border: 0; padding: 0; color: var(--fg); background: var(--surface);
+  width: min(calc(100% - 32px), 460px); max-height: 88dvh; border-radius: var(--r-sheet);
   box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.5);
 }
-.sheet::backdrop { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(2px); }
-.sheet-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.sheet-title { font-size: 1.25rem; font-weight: 700; }
-.sheet-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
-.btn-danger { background: var(--live); color: #fff; }
+.sheet::backdrop { background: var(--scrim); }
+.sheet-body:focus { outline: none; }
+.sheet-body { padding: 8px 20px 24px; display: flex; flex-direction: column; gap: 20px; }
+.sheet-grabber { align-self: center; width: 38px; height: 5px; border-radius: 999px; background: var(--line-strong); }
+.sheet-head { display: flex; align-items: flex-start; gap: 12px; }
+.sheet-titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.sheet-title { font-size: 22px; line-height: 28px; font-weight: 700; }
+.sheet-subtitle { font-size: 15px; line-height: 20px; color: var(--muted); }
+.sheet-close {
+  flex: none; width: 36px; height: 36px; border: 0; border-radius: 999px;
+  background: var(--sunk); color: var(--fg-2); display: grid; place-items: center;
+}
+.sheet-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.sheet-actions .btn { flex: 1; min-width: 120px; }
 
-@media (max-width: 520px) {
+@media (max-width: 560px) {
   .sheet {
-    margin: auto 0 0; width: 100%; max-width: 100%;
-    border-radius: 20px 20px 0 0;
+    margin: auto 0 0; width: 100%; max-width: 100%; border-radius: var(--r-sheet) var(--r-sheet) 0 0;
     padding-bottom: env(safe-area-inset-bottom);
-  }
-  /* Grabber, like an iOS sheet. */
-  .sheet-body::before {
-    content: ""; align-self: center; width: 36px; height: 5px; border-radius: 3px;
-    background: var(--sunk); margin: -8px 0 2px;
   }
 }
