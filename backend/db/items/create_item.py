@@ -21,6 +21,8 @@ def create_item(list_id: str, item_id: str, fields: dict, sub: str, now: str) ->
         item["qty"] = fields["qty"]
     if fields.get("position") is not None:
         item["position"] = fields["position"]
+    if fields.get("categoryId"):
+        item["categoryId"] = fields["categoryId"]
 
     try:
         transact_write([

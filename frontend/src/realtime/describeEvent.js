@@ -16,6 +16,12 @@ export function describeEvent(event, { nameOf, previousItem }) {
       return t("event.removed", { who, text: event.item.text });
     case "list.updated":
       return t("event.renamed", { who, name: event.list.name });
+    case "items.deleted":
+      return t(event.scope === "completed" ? "event.clearedCompleted" : "event.clearedAll", { who });
+    case "category.created":
+      return t("event.categoryAdded", { who, name: event.category.name });
+    case "category.deleted":
+      return t("event.categoryDeleted", { who });
     case "member.joined":
       return t("event.joined", { who: displayName(event.member.email) });
     case "member.removed":

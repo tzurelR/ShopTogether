@@ -1,6 +1,6 @@
 .live-pill {
   display: inline-flex; align-items: center; gap: 6px; flex: none;
-  font-size: 0.75rem; font-weight: 600; padding: 6px 10px; border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 600; padding: 3px 9px; border-radius: 999px;
   color: var(--live); background: var(--live-soft);
 }
 .live-pill::before {

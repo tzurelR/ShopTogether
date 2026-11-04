@@ -64,6 +64,7 @@
   flex: 1; min-width: 0; border: 0; outline: none; background: transparent;
   font-size: 1.0625rem; padding: 13px 0;
 }
+.item-input::placeholder { color: var(--muted); opacity: 0.7; }
 .item-delete {
   flex: none; border: 0; background: none; color: var(--live); font-weight: 600; cursor: pointer;
   padding: 10px 4px; min-height: 44px; touch-action: manipulation;
@@ -80,3 +81,10 @@
   padding: 18px 4px 8px; font-size: 0.875rem; color: var(--muted);
 }
 .completed-header button { border: 0; background: none; color: var(--accent); font-size: 0.875rem; cursor: pointer; padding: 4px 0; }
+
+/* ≡ drag handle at the row's end edge */
+.item-handle {
+  flex: none; width: 40px; height: 44px; margin-inline-end: -10px; display: grid; place-items: center;
+  color: var(--muted); opacity: 0.55; cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none;
+}
+.item-handle:active { opacity: 1; color: var(--accent); }

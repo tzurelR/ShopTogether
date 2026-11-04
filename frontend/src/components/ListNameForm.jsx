@@ -4,8 +4,8 @@ import Alert from "./Alert.jsx";
 import TextField from "./TextField.jsx";
 import { t } from "../i18n/i18n.js";
 
-// Name field + Save/Cancel, used for both "New list" and "Rename".
-export default function ListNameForm({ initialName = "", submitLabel, busyLabel, onSubmit, onCancel }) {
+// Name field + Save/Cancel: new list, rename list, new category, rename category.
+export default function ListNameForm({ initialName = "", submitLabel, busyLabel, onSubmit, onCancel, label, placeholder, maxLength = 80 }) {
   const [name, setName] = useState(initialName);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,11 +26,11 @@ export default function ListNameForm({ initialName = "", submitLabel, busyLabel,
     <form className="stack" onSubmit={handleSubmit}>
       <TextField
         id="list-name"
-        label={t("lists.nameLabel")}
+        label={label ?? t("lists.nameLabel")}
         value={name}
         onChange={(e) => setName(e.target.value)}
-        maxLength={80}
-        placeholder={t("lists.namePlaceholder")}
+        maxLength={maxLength}
+        placeholder={placeholder ?? t("lists.namePlaceholder")}
         dir="auto"
         autoFocus
         required

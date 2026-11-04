@@ -22,6 +22,9 @@ class Request:
             raise BadRequest(f"Missing path parameter '{name}'.")
         return unquote(value)
 
+    def query(self, name: str, default: str = "") -> str:
+        return (self.event.get("queryStringParameters") or {}).get(name, default)
+
     def body(self, fields: dict[str, Field], *, require_any: bool = False) -> dict:
         if self._body is None:
             self._body = parse_json_body(self.event)

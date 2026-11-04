@@ -10,7 +10,7 @@ const START_SWIPE = 10; // px of sideways movement before a touch counts as a sw
 
 // One item, Reminders-style: round check, title (tap to edit: Return saves, Esc cancels),
 // amount as a badge, and swipe toward the start edge to delete (left in English, right in Hebrew).
-export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelete }) {
+export default function ItemRow({ item, flash = false, lifted = null, onToggle, onEdit, onDelete, onDragStart, onDragMove, onDragEnd }) {
   const pending = item.id.startsWith("tmp-");
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(formatItem(item));
@@ -113,13 +113,18 @@ export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelet
     else setOffset(offset < -ACTION_WIDTH / 2 ? -ACTION_WIDTH : 0);
   }
 
-  const classes = ["item", item.done && "item-done", pending && "item-pending", flash && "item-flash"];
+  const classes = ["item", item.done && "item-done", pending && "item-pending", flash && "item-flash", lifted != null && "item-lifted"];
   return (
-    <li className={classes.filter(Boolean).join(" ")}>
+    <li
+      className={classes.filter(Boolean).join(" ")}
+      data-item-id={item.id}
+      style={lifted != null ? { transform: `translateY(${lifted}px)` } : undefined}
+    >
       <button
         type="button"
         className="item-swipe-delete"
-        style={{ width: Math.max(ACTION_WIDTH, -offset) }}
+        // Hidden at rest, so its red never shows through the card's rounded corners.
+        style={{ width: Math.max(ACTION_WIDTH, -offset), visibility: offset === 0 && !dragging ? "hidden" : "visible" }}
         aria-hidden={offset === 0}
         tabIndex={offset === 0 ? -1 : 0}
         onClick={remove}
@@ -182,6 +187,32 @@ export default function ItemRow({ item, flash = false, onToggle, onEdit, onDelet
                 </span>
               )}
             </button>
+          )}
+          {onDragStart && !editing && !pending && (
+            <span
+              className="item-handle"
+              role="button"
+              tabIndex={-1}
+              aria-label={t("item.move", { text: item.text })}
+              // Its own gesture: no swipe, no scroll, no text selection while dragging.
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                e.currentTarget.setPointerCapture?.(e.pointerId);
+                onDragStart(item, e);
+              }}
+              onPointerMove={(e) => onDragMove?.(e)}
+              onPointerUp={(e) => onDragEnd?.(e)}
+              onPointerCancel={(e) => onDragEnd?.(e, { cancelled: true })}
+            >
+              <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+                <g fill="currentColor">
+                  <rect x="3" y="5" width="14" height="1.8" rx="0.9" />
+                  <rect x="3" y="9.1" width="14" height="1.8" rx="0.9" />
+                  <rect x="3" y="13.2" width="14" height="1.8" rx="0.9" />
+                </g>
+              </svg>
+            </span>
           )}
         </div>
       </div>

@@ -7,7 +7,7 @@ from db.lists.get_list import get_list
 from helpers.access import list_not_found
 from helpers.request import Request
 from helpers.responses import ok
-from helpers.views import invite_view, item_view, list_view, member_view
+from helpers.views import category_view, invite_view, item_view, list_view, member_view
 
 
 def _item_order(item: dict):
@@ -17,7 +17,7 @@ def _item_order(item: dict):
 
 
 def getlist(req: Request) -> dict:
-    meta, items, members, invites = None, [], [], []
+    meta, items, members, invites, categories = None, [], [], [], []
     for row in get_list(req.path("listId")):
         sk = row["SK"]
         if sk == keys.META:
@@ -26,6 +26,8 @@ def getlist(req: Request) -> dict:
             items.append(item_view(row))
         elif sk.startswith(keys.MEMBER_PREFIX):
             members.append(member_view(row))
+        elif sk.startswith(keys.CAT_PREFIX):
+            categories.append(category_view(row))
         elif sk.startswith(keys.INVITE_PREFIX) and row.get("expiresAt", 0) > time.time():
             invites.append(invite_view(row))
 
@@ -34,10 +36,12 @@ def getlist(req: Request) -> dict:
         raise list_not_found()
 
     items.sort(key=_item_order)
+    categories.sort(key=lambda c: (c["position"] is None, c["position"] or 0, c["id"]))
     members.sort(key=lambda m: (m["role"] != "owner", m["joinedAt"] or ""))
     return ok({
         "list": list_view(meta, me["role"]),
         "items": items,
+        "categories": categories,
         "members": members,
         # Only the owner manages invites.
         "invites": invites if me["role"] == "owner" else [],

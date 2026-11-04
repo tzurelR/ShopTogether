@@ -81,3 +81,9 @@ button, input { font: inherit; color: inherit; }
 .empty-title { font-size: 1.1875rem; font-weight: 600; }
 .empty .muted { max-width: 32ch; }
 .tap-to-add { flex: 1; min-height: 120px; border: 0; background: none; cursor: text; }
+
+/* Small label chips: Owner, Editor, Pending. */
+.tag {
+  flex: none; font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+  background: var(--sunk); color: var(--muted);
+}

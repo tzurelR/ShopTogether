@@ -43,6 +43,10 @@ def conn_sk(connection_id: str) -> str:
     return f"CONN#{connection_id}"
 
 
+def cat_sk(category_id: str) -> str:
+    return f"CAT#{category_id}"
+
+
 def push_sk(subscription_id: str) -> str:
     return f"PUSH#{subscription_id}"
 
@@ -52,3 +56,4 @@ MEMBER_PREFIX = "MEMBER#"
 INVITE_PREFIX = "INVITE#"
 CONN_PREFIX = "CONN#"
 PUSH_PREFIX = "PUSH#"
+CAT_PREFIX = "CAT#"

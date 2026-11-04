@@ -2,15 +2,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ApiError } from "../api/request.js";
+import { createCategory } from "../api/createCategory.js";
 import { createItem } from "../api/createItem.js";
+import { deleteCategory } from "../api/deleteCategory.js";
 import { deleteItem } from "../api/deleteItem.js";
+import { deleteItems } from "../api/deleteItems.js";
 import { getList } from "../api/getList.js";
+import { updateCategory } from "../api/updateCategory.js";
 import { updateItem } from "../api/updateItem.js";
 import { useAuth } from "../auth/useAuth.js";
 import Alert from "../components/Alert.jsx";
 import AppBar from "../components/AppBar.jsx";
 import BottomBar from "../components/BottomBar.jsx";
+import CategoryHeader from "../components/CategoryHeader.jsx";
+import ConfirmDelete from "../components/ConfirmDelete.jsx";
 import ItemRow from "../components/ItemRow.jsx";
+import ListMenu from "../components/ListMenu.jsx";
+import ListNameForm from "../components/ListNameForm.jsx";
 import LivePill from "../components/LivePill.jsx";
 import NewItemRow from "../components/NewItemRow.jsx";
 import ShareSheet from "../components/ShareSheet.jsx";
@@ -19,23 +27,19 @@ import Toast from "../components/Toast.jsx";
 import { displayName } from "../lib/displayName.js";
 import { haptic } from "../lib/haptic.js";
 import { listColor } from "../lib/listColor.js";
+import { byOrder, dropPosition, groupOf } from "../lib/ordering.js";
 import { describeEvent } from "../realtime/describeEvent.js";
 import { useListSocket } from "../realtime/useListSocket.js";
 import { t } from "../i18n/i18n.js";
-
-// Items with a position first (by position), then by ID (= creation time), like the API.
-function byOrder(a, b) {
-  const pa = a.position ?? Infinity;
-  const pb = b.position ?? Infinity;
-  if (pa !== pb) return pa - pb;
-  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-}
 
 let tempCounter = 0;
 
 const FLASH_MS = 1500;
 // A checked item stays in place this long before it moves to Completed (like Reminders).
 const LINGER_MS = 1200;
+// While dragging near the top or bottom edge, the page scrolls by this much per frame.
+const EDGE_PX = 90;
+const SCROLL_STEP = 12;
 
 export default function ListPage() {
   const { id: listId } = useParams();
@@ -46,7 +50,11 @@ export default function ListPage() {
   const [members, setMembers] = useState([]);
   const [invites, setInvites] = useState([]);
   const [sharing, setSharing] = useState(false);
-  const [adding, setAdding] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [adding, setAdding] = useState(null); // null, or { group: "" | categoryId } for the new-item row
+  const [categorySheet, setCategorySheet] = useState(null); // { kind: "create" | "rename" | "delete", category }
+  const [clearing, setClearing] = useState(null); // "all" | "completed" while the confirm sheet is open
+  const [drag, setDrag] = useState(null); // { id, offset, target: { group, index }, lineTop }
   const [showCompleted, setShowCompleted] = useState(false);
   const [lingering, setLingering] = useState({}); // itemId -> true right after you check it
   const [flashing, setFlashing] = useState({}); // itemId -> true while highlighted
@@ -62,6 +70,7 @@ export default function ListPage() {
       const data = await getList(listId);
       setList(data.list);
       setItems(data.items);
+      setCategories(data.categories || []);
       setMembers(data.members);
       setInvites(data.invites);
       setStatus("ready");
@@ -132,9 +141,24 @@ export default function ListPage() {
       case "item.deleted":
         setItems((current) => current.filter((i) => i.id !== event.item.id));
         break;
+      case "items.deleted": {
+        const gone = new Set(event.itemIds || []);
+        setItems((current) => current.filter((i) => !gone.has(i.id)));
+        break;
+      }
       case "list.updated":
         setList((current) => ({ ...current, name: event.list.name }));
         break;
+      case "category.created":
+      case "category.updated":
+        setCategories((current) => [...current.filter((c) => c.id !== event.category.id), event.category]);
+        break;
+      case "category.deleted": {
+        const moved = new Set(event.movedItemIds || []);
+        setCategories((current) => current.filter((c) => c.id !== event.category.id));
+        setItems((current) => current.map((i) => (moved.has(i.id) || i.categoryId === event.category.id ? { ...i, categoryId: null } : i)));
+        break;
+      }
       case "member.joined":
         setMembers((current) => [...current.filter((m) => m.sub !== event.member.sub), event.member]);
         setInvites((current) => current.filter((i) => i.email !== event.member.email));
@@ -182,7 +206,10 @@ export default function ListPage() {
 
   async function changeItem(item, changes) {
     setError("");
-    replaceItem(item.id, { ...item, ...changes, qty: changes.qty === "" ? null : (changes.qty ?? item.qty) });
+    const optimistic = { ...item, ...changes };
+    if (changes.qty === "") optimistic.qty = null;
+    if (changes.categoryId === "") optimistic.categoryId = null;
+    replaceItem(item.id, optimistic);
     try {
       replaceItem(item.id, await updateItem(listId, item.id, changes));
     } catch (err) {
@@ -224,7 +251,140 @@ export default function ListPage() {
     const fields = { text: item.text, done: !!item.done };
     if (item.qty) fields.qty = item.qty;
     if (item.position != null) fields.position = item.position;
+    if (item.categoryId && categories.some((c) => c.id === item.categoryId)) fields.categoryId = item.categoryId;
     addItem(fields);
+  }
+
+  // ---------- delete many (⋯ menu) ----------
+
+  async function handleClear() {
+    const scope = clearing;
+    const before = itemsRef.current;
+    // Gone right away; put back if the server says no.
+    setItems((current) => (scope === "completed" ? current.filter((i) => !i.done) : []));
+    setClearing(null);
+    haptic(15);
+    try {
+      const deleted = await deleteItems(listId, scope);
+      if (deleted.length) {
+        setToast({
+          text: t("list.deletedMany", { count: deleted.length }),
+          action: { label: t("list.undo"), onClick: () => deleted.forEach(restoreItem) },
+        });
+      }
+    } catch (err) {
+      setItems(before);
+      setError(t("list.couldntDeleteMany", { reason: err.message }));
+    }
+  }
+
+  // ---------- categories ----------
+
+  async function handleCreateCategory(name) {
+    const category = await createCategory(listId, name);
+    setCategories((current) => [...current.filter((c) => c.id !== category.id), category]);
+    setCategorySheet(null);
+  }
+
+  async function handleRenameCategory(name) {
+    const category = await updateCategory(listId, categorySheet.category.id, { name });
+    setCategories((current) => current.map((c) => (c.id === category.id ? category : c)));
+    setCategorySheet(null);
+  }
+
+  async function handleDeleteCategory() {
+    const { id } = categorySheet.category;
+    await deleteCategory(listId, id);
+    setCategories((current) => current.filter((c) => c.id !== id));
+    setItems((current) => current.map((i) => (i.categoryId === id ? { ...i, categoryId: null } : i)));
+    setCategorySheet(null);
+  }
+
+  // ---------- drag & drop (the ≡ handle) ----------
+
+  const dropRef = useRef(null);
+  const dragRef = useRef(null); // { item, startY, startScroll, lastY, frame }
+
+  /** Which group and slot the pointer is over, plus where to draw the drop line. */
+  function dropTarget(clientY, draggedId) {
+    const wrap = dropRef.current;
+    if (!wrap) return null;
+    let target = null;
+    let lineY = null;
+    for (const section of wrap.querySelectorAll("[data-group]")) {
+      const group = section.dataset.group;
+      const sectionTop = section.getBoundingClientRect().top;
+      if (target && clientY < sectionTop) break;
+      const header = section.querySelector("[data-category-header]");
+      target = { group, index: 0 };
+      lineY = header ? header.getBoundingClientRect().bottom : sectionTop;
+      const rows = [...section.querySelectorAll("[data-item-id]")].filter((r) => r.dataset.itemId !== draggedId);
+      rows.forEach((row, i) => {
+        const rect = row.getBoundingClientRect();
+        if (clientY >= rect.top + rect.height / 2) {
+          target = { group, index: i + 1 };
+          lineY = rect.bottom;
+        }
+      });
+    }
+    if (!target) return null;
+    return { target, lineTop: lineY - wrap.getBoundingClientRect().top };
+  }
+
+  function refreshDrag() {
+    const d = dragRef.current;
+    if (!d) return;
+    const offset = d.lastY + window.scrollY - (d.startY + d.startScroll);
+    const found = dropTarget(d.lastY, d.item.id);
+    setDrag({ id: d.item.id, offset, target: found?.target ?? null, lineTop: found?.lineTop ?? null });
+  }
+
+  function startDrag(item, event) {
+    haptic(8);
+    dragRef.current = { item, startY: event.clientY, startScroll: window.scrollY, lastY: event.clientY, frame: 0 };
+    const tick = () => {
+      const d = dragRef.current;
+      if (!d) return;
+      // Scroll while the finger is near the top or bottom edge, so long lists work.
+      if (d.lastY < EDGE_PX) window.scrollBy(0, -SCROLL_STEP);
+      else if (d.lastY > window.innerHeight - EDGE_PX - 40) window.scrollBy(0, SCROLL_STEP);
+      refreshDrag();
+      d.frame = requestAnimationFrame(tick);
+    };
+    dragRef.current.frame = requestAnimationFrame(tick);
+    refreshDrag();
+  }
+
+  function moveDrag(event) {
+    if (!dragRef.current) return;
+    dragRef.current.lastY = event.clientY;
+    refreshDrag();
+  }
+
+  function endDrag(event, { cancelled = false } = {}) {
+    const d = dragRef.current;
+    if (!d) return;
+    cancelAnimationFrame(d.frame);
+    dragRef.current = null;
+    const found = cancelled ? null : dropTarget(event.clientY ?? d.lastY, d.item.id);
+    setDrag(null);
+    if (found) moveItem(d.item, found.target);
+  }
+
+  /** Put `item` into `group` before the item now at `index` (siblings exclude it). */
+  function moveItem(item, { group, index }) {
+    const ids = new Set(categories.map((c) => c.id));
+    const current = itemsRef.current.find((i) => i.id === item.id) || item;
+    const inGroup = itemsRef.current.filter((i) => !i.done && groupOf(i, ids) === group).sort(byOrder);
+    const siblings = inGroup.filter((i) => i.id !== current.id);
+    const from = inGroup.findIndex((i) => i.id === current.id);
+    if (from !== -1 && from === index) return; // dropped where it already was
+    haptic(12);
+    const { position, renumber } = dropPosition(siblings, index);
+    renumber.forEach(({ item: sibling, position: p }) => changeItem(sibling, { position: p }));
+    const changes = { position };
+    if (groupOf(current, ids) !== group) changes.categoryId = group; // "" = out of its category
+    changeItem(current, changes);
   }
 
   function toggle(item) {
@@ -248,9 +408,34 @@ export default function ListPage() {
 
   const open = items.filter((i) => !i.done || lingering[i.id]).sort(byOrder);
   const done = items.filter((i) => i.done && !lingering[i.id]).sort(byOrder);
+  const sortedCategories = [...categories].sort(byOrder);
+  const categoryIds = new Set(categories.map((c) => c.id));
+  const openIn = (group) => open.filter((i) => groupOf(i, categoryIds) === group);
+  const uncategorized = openIn("");
   const rowProps = { onToggle: toggle, onEdit: changeItem, onDelete: removeItem };
+  const dragProps = { onDragStart: startDrag, onDragMove: moveDrag, onDragEnd: endDrag };
+  const startAdding = (group = "") => setAdding({ group });
+  const newItemRow = (group) =>
+    adding?.group === group && (
+      <NewItemRow
+        key={`new-${group}`}
+        onAdd={(fields) => addItem(group ? { ...fields, categoryId: group } : fields)}
+        onClose={() => setAdding(null)}
+      />
+    );
+  const renderRow = (item) => (
+    <ItemRow
+      key={item.id}
+      item={item}
+      flash={!!flashing[item.id]}
+      lifted={drag?.id === item.id ? drag.offset : null}
+      {...rowProps}
+      {...dragProps}
+    />
+  );
 
   const left = items.filter((i) => !i.done).length;
+  const showEmpty = open.length === 0 && !adding && categories.length === 0;
   return (
     // The list's color tints the title, checks and buttons, like Reminders.
     <main className="page" style={{ "--accent": listColor(listId) }}>
@@ -259,12 +444,24 @@ export default function ListPage() {
         subtitle={status === "ready" ? (left ? t("lists.left", { count: left }) : t("list.allDone")) : null}
         back="/"
         backLabel={t("list.back")}
+        meta={status === "ready" ? <LivePill status={liveStatus} present={present} mySub={user?.sub} /> : null}
       >
-        {status === "ready" && <LivePill status={liveStatus} present={present} mySub={user?.sub} />}
         {status === "ready" && (
-          <button className="nav-button" type="button" onClick={() => setSharing(true)}>
-            {t("list.share")}
+          <button className="nav-icon" type="button" aria-label={t("list.share")} title={t("list.share")} onClick={() => setSharing(true)}>
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="8" r="3.5" />
+              <path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5" />
+              <path d="M19 8v6M16 11h6" />
+            </svg>
           </button>
+        )}
+        {status === "ready" && (
+          <ListMenu
+            totalCount={items.length}
+            doneCount={items.filter((i) => i.done).length}
+            onDeleteCompleted={() => setClearing("completed")}
+            onDeleteAll={() => setClearing("all")}
+          />
         )}
       </AppBar>
 
@@ -284,18 +481,54 @@ export default function ListPage() {
 
       {status === "ready" && (
         <>
-          {open.length === 0 && !adding && (
+          {showEmpty && (
             <div className="empty">
               <div className="empty-icon" aria-hidden="true">{done.length ? "✓" : "+"}</div>
               <p className="empty-title">{done.length ? t("list.allDone") : t("list.emptyTitle")}</p>
               <p className="muted">{done.length ? t("list.allDoneBody") : t("list.emptyBody")}</p>
             </div>
           )}
-          {(open.length > 0 || adding) && (
-            <ul className="items">
-              {open.map((item) => <ItemRow key={item.id} item={item} flash={!!flashing[item.id]} {...rowProps} />)}
-              {adding && <NewItemRow onAdd={addItem} onClose={() => setAdding(false)} />}
-            </ul>
+
+          {!showEmpty && (
+            <div ref={dropRef} className={`drop-wrap${drag ? " dragging-list" : ""}`}>
+              {/* Items without a category come first, like Reminders. */}
+              {(uncategorized.length > 0 || adding?.group === "" || (drag && categories.length > 0)) && (
+                <section data-group="">
+                  {uncategorized.length === 0 && adding?.group !== "" && drag && (
+                    <div className="drop-zone">{t("category.dropHere")}</div>
+                  )}
+                  {(uncategorized.length > 0 || adding?.group === "") && (
+                    <ul className="items">
+                      {uncategorized.map(renderRow)}
+                      {newItemRow("")}
+                    </ul>
+                  )}
+                </section>
+              )}
+
+              {sortedCategories.map((category) => {
+                const rows = openIn(category.id);
+                return (
+                  <section key={category.id} data-group={category.id} className="category-section">
+                    <CategoryHeader
+                      category={category}
+                      count={rows.filter((i) => !i.done).length}
+                      onAddItem={(c) => startAdding(c.id)}
+                      onRename={(c) => setCategorySheet({ kind: "rename", category: c })}
+                      onDelete={(c) => setCategorySheet({ kind: "delete", category: c })}
+                    />
+                    {(rows.length > 0 || adding?.group === category.id) && (
+                      <ul className="items">
+                        {rows.map(renderRow)}
+                        {newItemRow(category.id)}
+                      </ul>
+                    )}
+                  </section>
+                );
+              })}
+
+              {drag?.lineTop != null && <div className="drop-line" style={{ top: drag.lineTop }} aria-hidden="true" />}
+            </div>
           )}
 
           {done.length > 0 && (
@@ -315,18 +548,75 @@ export default function ListPage() {
           )}
 
           {/* Tapping the empty space under the list starts a new item, like Reminders. */}
-          <button type="button" className="tap-to-add" aria-hidden="true" tabIndex={-1} onClick={() => setAdding(true)} />
+          <button type="button" className="tap-to-add" aria-hidden="true" tabIndex={-1} onClick={() => startAdding("")} />
 
           <BottomBar
             left={
-              <button className="toolbar-button" type="button" onClick={() => setAdding(true)}>
+              <button className="toolbar-button" type="button" onClick={() => startAdding("")}>
                 <span className="toolbar-plus" aria-hidden="true">+</span> {t("list.newItem")}
+              </button>
+            }
+            right={
+              <button className="toolbar-button" type="button" onClick={() => setCategorySheet({ kind: "create" })}>
+                {t("category.add")}
               </button>
             }
           />
         </>
       )}
       <Toast message={toast} onDone={clearToast} />
+
+      <Sheet
+        open={!!clearing}
+        title={clearing === "completed" ? t("list.deleteCompletedTitle") : t("list.deleteAllTitle")}
+        onClose={() => setClearing(null)}
+      >
+        <ConfirmDelete
+          message={
+            clearing === "completed"
+              ? t("list.deleteCompletedBody", { count: items.filter((i) => i.done).length })
+              : t("list.deleteAllBody", { count: items.length })
+          }
+          confirmLabel={clearing === "completed" ? t("list.deleteCompleted", { count: items.filter((i) => i.done).length }) : t("list.deleteAll")}
+          onConfirm={handleClear}
+          onCancel={() => setClearing(null)}
+        />
+      </Sheet>
+
+      <Sheet open={categorySheet?.kind === "create"} title={t("category.new")} onClose={() => setCategorySheet(null)}>
+        <ListNameForm
+          label={t("category.nameLabel")}
+          placeholder={t("category.namePlaceholder")}
+          maxLength={60}
+          submitLabel={t("category.create")}
+          busyLabel={t("category.creating")}
+          onSubmit={handleCreateCategory}
+          onCancel={() => setCategorySheet(null)}
+        />
+      </Sheet>
+      <Sheet open={categorySheet?.kind === "rename"} title={t("category.rename")} onClose={() => setCategorySheet(null)}>
+        <ListNameForm
+          initialName={categorySheet?.category?.name}
+          label={t("category.nameLabel")}
+          maxLength={60}
+          submitLabel={t("common.save")}
+          busyLabel={t("common.saving")}
+          onSubmit={handleRenameCategory}
+          onCancel={() => setCategorySheet(null)}
+        />
+      </Sheet>
+      <Sheet
+        open={categorySheet?.kind === "delete"}
+        title={t("category.deleteTitle", { name: categorySheet?.category?.name ?? "" })}
+        onClose={() => setCategorySheet(null)}
+      >
+        <ConfirmDelete
+          message={t("category.deleteBody")}
+          confirmLabel={t("category.delete")}
+          onConfirm={handleDeleteCategory}
+          onCancel={() => setCategorySheet(null)}
+        />
+      </Sheet>
 
       <Sheet open={sharing && !!list} title={t("share.title")} onClose={() => setSharing(false)}>
         {list && (

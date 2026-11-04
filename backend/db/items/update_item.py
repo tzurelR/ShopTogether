@@ -8,6 +8,9 @@ from db.table import is_condition_failure, transact_write, tx_update
 from helpers.constants import ITEM_WRITE_ATTEMPTS
 from helpers.errors import Conflict
 
+# Sent as "" to remove the attribute (no amount / no category).
+CLEARABLE = ("qty", "categoryId")
+
 
 def update_item(list_id: str, item_id: str, changes: dict, sub: str, now: str) -> dict | None:
     """Returns the updated item, or None if the item (or list) doesn't exist."""
@@ -22,8 +25,8 @@ def update_item(list_id: str, item_id: str, changes: dict, sub: str, now: str) -
         values = {":now": now, ":sub": sub, ":old_done": current.get("done", False)}
         for field, value in changes.items():
             names[f"#{field}"] = field
-            if field == "qty" and value == "":
-                removes.append("#qty")
+            if field in CLEARABLE and value == "":
+                removes.append(f"#{field}")
             else:
                 sets.append(f"#{field} = :{field}")
                 values[f":{field}"] = value
@@ -57,8 +60,8 @@ def update_item(list_id: str, item_id: str, changes: dict, sub: str, now: str) -
 
         updated = {**current, "updatedAt": now, "updatedBy": sub}
         for field, value in changes.items():
-            if field == "qty" and value == "":
-                updated.pop("qty", None)
+            if field in CLEARABLE and value == "":
+                updated.pop(field, None)
             else:
                 updated[field] = value
         return updated

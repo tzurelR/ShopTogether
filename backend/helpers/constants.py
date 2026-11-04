@@ -8,19 +8,27 @@ ITEM_TEXT = Field(str, min_len=1, max_len=200)
 ITEM_QTY = Field(str, max_len=20)  # "" clears it
 ITEM_DONE = Field(bool)
 ITEM_POSITION = Field(float)
+ITEM_CATEGORY = Field(str, max_len=64)  # a category ID; "" moves the item out of its category
 
 CREATE_ITEM_FIELDS = {
     "text": Field(str, required=True, min_len=1, max_len=200),  # ITEM_TEXT, but required
     "qty": ITEM_QTY,
     "done": ITEM_DONE,
     "position": ITEM_POSITION,
+    "categoryId": ITEM_CATEGORY,
 }
 UPDATE_ITEM_FIELDS = {
     "text": ITEM_TEXT,
     "qty": ITEM_QTY,
     "done": ITEM_DONE,
     "position": ITEM_POSITION,
+    "categoryId": ITEM_CATEGORY,
 }
+
+# Optional sections inside a list ("Vegetables", "Dairy"), ordered by position.
+CATEGORY_NAME = Field(str, min_len=1, max_len=60)
+CREATE_CATEGORY_FIELDS = {"name": Field(str, required=True, min_len=1, max_len=60), "position": Field(float)}
+UPDATE_CATEGORY_FIELDS = {"name": CATEGORY_NAME, "position": Field(float)}
 
 # How often an item write is retried when another user changed the same item at the same moment.
 ITEM_WRITE_ATTEMPTS = 3

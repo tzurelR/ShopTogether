@@ -1,5 +1,6 @@
 """Membership checks shared by every /lists/{listId} route."""
 
+from db.categories.get_category import get_category
 from db.members.get_member import get_member
 from helpers.errors import Forbidden, NotFound
 
@@ -21,3 +22,10 @@ def require_owner(list_id: str, sub: str) -> dict:
     if member.get("role") != "owner":
         raise Forbidden("Only the list owner can do that.")
     return member
+
+
+def require_category(list_id: str, category_id: str) -> dict:
+    category = get_category(list_id, category_id)
+    if category is None:
+        raise NotFound("Category not found. Someone may have deleted it.")
+    return category

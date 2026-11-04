@@ -50,6 +50,7 @@ export default function NewItemRow({ onAdd, onClose }) {
           id="new-item"
           className="item-input"
           aria-label={t("list.newItemLabel")}
+          placeholder={t("list.newItemPlaceholder")}
           dir="auto"
           value={text}
           maxLength={230}

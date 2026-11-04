@@ -1,7 +1,7 @@
 """POST /lists/{listId}/items"""
 
 from db.items.create_item import create_item
-from helpers.access import list_not_found, require_member
+from helpers.access import list_not_found, require_category, require_member
 from helpers.broadcast import broadcast
 from helpers.clock import now_iso
 from helpers.constants import CREATE_ITEM_FIELDS
@@ -16,6 +16,8 @@ def createitem(req: Request) -> dict:
     list_id = req.path("listId")
     body = req.body(CREATE_ITEM_FIELDS)
     member = require_member(list_id, req.user.sub)
+    if body.get("categoryId"):
+        require_category(list_id, body["categoryId"])
     item = create_item(list_id, new_id(), body, req.user.sub, now_iso())
     if item is None:
         raise list_not_found()

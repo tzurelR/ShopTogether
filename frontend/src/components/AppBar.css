@@ -28,7 +28,14 @@
   font-size: 2.125rem; font-weight: 700; letter-spacing: 0.01em; color: var(--accent);
   overflow-wrap: anywhere; padding: 0 2px;
 }
-.large-subtitle { color: var(--muted); font-size: 0.9375rem; padding: 0 2px; margin-top: -2px; }
+.large-subtitle-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; padding: 0 2px; margin-top: -2px; min-height: 26px; }
+.large-subtitle { color: var(--muted); font-size: 0.9375rem; }
 .nav-button {
   border: 0; background: none; color: var(--accent); font-size: 1.0625rem; cursor: pointer; padding: 6px 0; min-height: 44px;
 }
+/* Round icon buttons in the top bar (Share, ⋯): 44px targets, tinted like Reminders. */
+.nav-icon {
+  width: 36px; height: 36px; margin: 4px 0; border: 0; border-radius: 50%; cursor: pointer;
+  display: grid; place-items: center; color: var(--accent); background: var(--accent-soft);
+}
+.nav-actions { gap: 10px; }

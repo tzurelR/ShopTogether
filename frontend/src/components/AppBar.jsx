@@ -6,7 +6,7 @@ import { t } from "../i18n/i18n.js";
 
 // iOS-style navigation: a sticky bar (back + actions) above a large title. Once the
 // large title scrolls away, a small copy of it appears in the bar, like Reminders.
-export default function AppBar({ title, subtitle, back, backLabel = t("common.back"), children }) {
+export default function AppBar({ title, subtitle, meta, back, backLabel = t("common.back"), children }) {
   const titleRef = useRef(null);
   const [compact, setCompact] = useState(false);
 
@@ -34,7 +34,12 @@ export default function AppBar({ title, subtitle, back, backLabel = t("common.ba
         <div className="nav-side nav-actions">{children}</div>
       </div>
       <h1 ref={titleRef} className="large-title" dir="auto">{title}</h1>
-      {subtitle && <p className="large-subtitle">{subtitle}</p>}
+      {(subtitle || meta) && (
+        <div className="large-subtitle-row">
+          {subtitle && <p className="large-subtitle">{subtitle}</p>}
+          {meta}
+        </div>
+      )}
     </header>
   );
 }

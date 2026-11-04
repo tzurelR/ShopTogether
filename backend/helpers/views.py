@@ -25,6 +25,7 @@ def item_view(row: dict) -> dict:
         "qty": row.get("qty"),
         "done": row.get("done", False),
         "position": row.get("position"),
+        "categoryId": row.get("categoryId"),
         "updatedBy": row.get("updatedBy"),
         "createdAt": row.get("createdAt"),
         "updatedAt": row.get("updatedAt"),
@@ -44,3 +45,7 @@ def invite_view(row: dict) -> dict:
         "createdAt": row.get("createdAt"),
         "expiresAt": row.get("expiresAt"),
     }
+
+
+def category_view(row: dict) -> dict:
+    return {"id": row["categoryId"], "name": row["name"], "position": row.get("position")}
